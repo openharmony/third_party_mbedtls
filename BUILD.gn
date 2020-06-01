@@ -5,6 +5,10 @@ config("mbedtls_config") {
   include_dirs = [
     "./include",
   ]
+
+  cflags = [
+    "-fPIC",
+  ]
 }
 
 source_set("mbedtls_source") {
@@ -75,6 +79,10 @@ source_set("mbedtls_source") {
 ]
 
 configs += [
+    ":mbedtls_config",
+  ]
+
+  public_configs = [
     ":mbedtls_config",
   ]
 }
