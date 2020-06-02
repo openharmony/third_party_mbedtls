@@ -2174,7 +2174,7 @@
  *
  * This module provides the CTR_DRBG AES random number generator.
  */
-// #define MBEDTLS_CTR_DRBG_C
+#define MBEDTLS_CTR_DRBG_C
 
 /**
  * \def MBEDTLS_DEBUG_C
@@ -2254,7 +2254,7 @@
  *
  * Requires: MBEDTLS_ECP_C
  */
-// #define MBEDTLS_ECDH_C
+#define MBEDTLS_ECDH_C
 
 /**
  * \def MBEDTLS_ECDSA_C
@@ -2316,7 +2316,7 @@
  *
  * This module provides a generic entropy pool
  */
-// #define MBEDTLS_ENTROPY_C
+#define MBEDTLS_ENTROPY_C
 
 /**
  * \def MBEDTLS_ERROR_C
@@ -2342,7 +2342,7 @@
  * This module enables the AES-GCM and CAMELLIA-GCM ciphersuites, if other
  * requisites are enabled as well.
  */
-// #define MBEDTLS_GCM_C
+#define MBEDTLS_GCM_C
 
 /**
  * \def MBEDTLS_HAVEGE_C
@@ -2380,7 +2380,7 @@
  * This module adds support for the Hashed Message Authentication Code
  * (HMAC)-based key derivation function (HKDF).
  */
-// #define MBEDTLS_HKDF_C
+#define MBEDTLS_HKDF_C
 
 /**
  * \def MBEDTLS_HMAC_DRBG_C
