@@ -617,14 +617,14 @@
  *
  * Enable Cipher Feedback mode (CFB) for symmetric ciphers.
  */
-// #define MBEDTLS_CIPHER_MODE_CFB
+#define MBEDTLS_CIPHER_MODE_CFB
 
 /**
  * \def MBEDTLS_CIPHER_MODE_CTR
  *
  * Enable Counter Block Cipher mode (CTR) for symmetric ciphers.
  */
-// #define MBEDTLS_CIPHER_MODE_CTR
+#define MBEDTLS_CIPHER_MODE_CTR
 
 /**
  * \def MBEDTLS_CIPHER_MODE_OFB
@@ -638,7 +638,7 @@
  *
  * Enable Xor-encrypt-xor with ciphertext stealing mode (XTS) for AES.
  */
-// #define MBEDTLS_CIPHER_MODE_XTS
+#define MBEDTLS_CIPHER_MODE_XTS
 
 /**
  * \def MBEDTLS_CIPHER_NULL_CIPHER
@@ -684,10 +684,10 @@
  *
  * Enable padding modes in the cipher layer.
  */
-// #define MBEDTLS_CIPHER_PADDING_PKCS7
-// #define MBEDTLS_CIPHER_PADDING_ONE_AND_ZEROS
-// #define MBEDTLS_CIPHER_PADDING_ZEROS_AND_LEN
-// #define MBEDTLS_CIPHER_PADDING_ZEROS
+#define MBEDTLS_CIPHER_PADDING_PKCS7
+#define MBEDTLS_CIPHER_PADDING_ONE_AND_ZEROS
+#define MBEDTLS_CIPHER_PADDING_ZEROS_AND_LEN
+#define MBEDTLS_CIPHER_PADDING_ZEROS
 
 /** \def MBEDTLS_CTR_DRBG_USE_128_BIT_KEY
  *
@@ -745,7 +745,7 @@
  *
  * Comment this macro to keep 3DES in the default ciphersuite list.
  */
-// #define MBEDTLS_REMOVE_3DES_CIPHERSUITES
+#define MBEDTLS_REMOVE_3DES_CIPHERSUITES
 
 /**
  * \def MBEDTLS_ECP_DP_SECP192R1_ENABLED
@@ -755,7 +755,6 @@
  *
  * Comment macros to disable the curve and functions for it
  */
-/*
 #define MBEDTLS_ECP_DP_SECP192R1_ENABLED
 #define MBEDTLS_ECP_DP_SECP224R1_ENABLED
 #define MBEDTLS_ECP_DP_SECP256R1_ENABLED
@@ -769,11 +768,7 @@
 #define MBEDTLS_ECP_DP_BP512R1_ENABLED
 #define MBEDTLS_ECP_DP_CURVE25519_ENABLED
 #define MBEDTLS_ECP_DP_CURVE448_ENABLED
-*/
-#define MBEDTLS_ECP_DP_SECP256R1_ENABLED
-#define MBEDTLS_ECP_DP_SECP384R1_ENABLED
-#define MBEDTLS_ECP_DP_BP256R1_ENABLED
-#define MBEDTLS_ECP_DP_BP384R1_ENABLED
+
 /**
  * \def MBEDTLS_ECP_NIST_OPTIM
  *
@@ -783,7 +778,7 @@
  *
  * Comment this macro to disable NIST curves optimisation.
  */
-// #define MBEDTLS_ECP_NIST_OPTIM
+#define MBEDTLS_ECP_NIST_OPTIM
 
 /**
  * \def MBEDTLS_ECP_RESTARTABLE
@@ -1005,7 +1000,7 @@
  *      MBEDTLS_TLS_ECDHE_RSA_WITH_3DES_EDE_CBC_SHA
  *      MBEDTLS_TLS_ECDHE_RSA_WITH_RC4_128_SHA
  */
-// #define MBEDTLS_KEY_EXCHANGE_ECDHE_RSA_ENABLED
+#define MBEDTLS_KEY_EXCHANGE_ECDHE_RSA_ENABLED
 
 /**
  * \def MBEDTLS_KEY_EXCHANGE_ECDHE_ECDSA_ENABLED
@@ -1125,7 +1120,7 @@
  * Disable if you run into name conflicts and want to really remove the
  * mbedtls_strerror()
  */
-// #define MBEDTLS_ERROR_STRERROR_DUMMY
+#define MBEDTLS_ERROR_STRERROR_DUMMY
 
 /**
  * \def MBEDTLS_GENPRIME
@@ -1134,7 +1129,7 @@
  *
  * Requires: MBEDTLS_BIGNUM_C
  */
-// #define MBEDTLS_GENPRIME
+#define MBEDTLS_GENPRIME
 
 /**
  * \def MBEDTLS_FS_IO
@@ -1243,7 +1238,7 @@
  *
  * Comment this macro to disable support for external private RSA keys.
  */
-// #define MBEDTLS_PK_RSA_ALT_SUPPORT
+#define MBEDTLS_PK_RSA_ALT_SUPPORT
 
 /**
  * \def MBEDTLS_PKCS1_V15
@@ -1313,7 +1308,7 @@
  *
  * Enable sending of all alert messages
  */
-// #define MBEDTLS_SSL_ALL_ALERT_MESSAGES
+#define MBEDTLS_SSL_ALL_ALERT_MESSAGES
 
 /**
  * \def MBEDTLS_SSL_ASYNC_PRIVATE
@@ -1358,7 +1353,7 @@
  *
  * Comment this macro to disable support for Encrypt-then-MAC
  */
-// #define MBEDTLS_SSL_ENCRYPT_THEN_MAC
+#define MBEDTLS_SSL_ENCRYPT_THEN_MAC
 
 /** \def MBEDTLS_SSL_EXTENDED_MASTER_SECRET
  *
@@ -1376,7 +1371,7 @@
  *
  * Comment this macro to disable support for Extended Master Secret.
  */
-// #define MBEDTLS_SSL_EXTENDED_MASTER_SECRET
+#define MBEDTLS_SSL_EXTENDED_MASTER_SECRET
 
 /**
  * \def MBEDTLS_SSL_FALLBACK_SCSV
@@ -1393,7 +1388,7 @@
  *
  * Comment this macro to disable support for FALLBACK_SCSV
  */
-// #define MBEDTLS_SSL_FALLBACK_SCSV
+#define MBEDTLS_SSL_FALLBACK_SCSV
 
 /**
  * \def MBEDTLS_SSL_HW_RECORD_ACCEL
@@ -1415,7 +1410,7 @@
  *
  * Comment this macro to disable 1/n-1 record splitting.
  */
-// #define MBEDTLS_SSL_CBC_RECORD_SPLITTING
+#define MBEDTLS_SSL_CBC_RECORD_SPLITTING
 
 /**
  * \def MBEDTLS_SSL_RENEGOTIATION
@@ -1437,7 +1432,7 @@
  *          configuration of this extension).
  *
  */
-// #define MBEDTLS_SSL_RENEGOTIATION
+#define MBEDTLS_SSL_RENEGOTIATION
 
 /**
  * \def MBEDTLS_SSL_SRV_SUPPORT_SSLV2_CLIENT_HELLO
@@ -1466,7 +1461,7 @@
  *
  * Comment this macro to disable support for the max_fragment_length extension
  */
-// #define MBEDTLS_SSL_MAX_FRAGMENT_LENGTH
+#define MBEDTLS_SSL_MAX_FRAGMENT_LENGTH
 
 /**
  * \def MBEDTLS_SSL_PROTO_SSL3
@@ -1490,7 +1485,7 @@
  *
  * Comment this macro to disable support for TLS 1.0
  */
-// #define MBEDTLS_SSL_PROTO_TLS1
+#define MBEDTLS_SSL_PROTO_TLS1
 
 /**
  * \def MBEDTLS_SSL_PROTO_TLS1_1
@@ -1502,7 +1497,7 @@
  *
  * Comment this macro to disable support for TLS 1.1 / DTLS 1.0
  */
-// #define MBEDTLS_SSL_PROTO_TLS1_1
+#define MBEDTLS_SSL_PROTO_TLS1_1
 
 /**
  * \def MBEDTLS_SSL_PROTO_TLS1_2
@@ -1514,7 +1509,7 @@
  *
  * Comment this macro to disable support for TLS 1.2 / DTLS 1.2
  */
-// #define MBEDTLS_SSL_PROTO_TLS1_2
+#define MBEDTLS_SSL_PROTO_TLS1_2
 
 /**
  * \def MBEDTLS_SSL_PROTO_DTLS
@@ -1612,7 +1607,7 @@
  *
  * Comment this macro to disable support for SSL session tickets
  */
-// #define MBEDTLS_SSL_SESSION_TICKETS
+#define MBEDTLS_SSL_SESSION_TICKETS
 
 /**
  * \def MBEDTLS_SSL_EXPORT_KEYS
@@ -1622,7 +1617,7 @@
  *
  * Comment this macro to disable support for key export
  */
-// #define MBEDTLS_SSL_EXPORT_KEYS
+#define MBEDTLS_SSL_EXPORT_KEYS
 
 /**
  * \def MBEDTLS_SSL_SERVER_NAME_INDICATION
@@ -1633,7 +1628,7 @@
  *
  * Comment this macro to disable support for server name indication in SSL
  */
-// #define MBEDTLS_SSL_SERVER_NAME_INDICATION
+#define MBEDTLS_SSL_SERVER_NAME_INDICATION
 
 /**
  * \def MBEDTLS_SSL_TRUNCATED_HMAC
@@ -1642,7 +1637,7 @@
  *
  * Comment this macro to disable support for truncated HMAC in SSL
  */
-// #define MBEDTLS_SSL_TRUNCATED_HMAC
+#define MBEDTLS_SSL_TRUNCATED_HMAC
 
 /**
  * \def MBEDTLS_SSL_TRUNCATED_HMAC_COMPAT
@@ -1910,7 +1905,7 @@
  *            it, and considering stronger ciphers instead.
  *
  */
-// #define MBEDTLS_ARC4_C
+#define MBEDTLS_ARC4_C
 
 /**
  * \def MBEDTLS_ASN1_PARSE_C
@@ -2118,7 +2113,7 @@
  *
  * Module:  library/chacha20.c
  */
-// #define MBEDTLS_CHACHA20_C
+#define MBEDTLS_CHACHA20_C
 
 /**
  * \def MBEDTLS_CHACHAPOLY_C
@@ -2129,7 +2124,7 @@
  *
  * This module requires: MBEDTLS_CHACHA20_C, MBEDTLS_POLY1305_C
  */
-// #define MBEDTLS_CHACHAPOLY_C
+#define MBEDTLS_CHACHAPOLY_C
 
 /**
  * \def MBEDTLS_CIPHER_C
@@ -2475,7 +2470,7 @@
  *            it, and considering stronger message digests instead.
  *
  */
-// #define MBEDTLS_MD5_C
+#define MBEDTLS_MD5_C
 
 /**
  * \def MBEDTLS_MEMORY_BUFFER_ALLOC_C
@@ -2700,7 +2695,7 @@
  * Module:  library/poly1305.c
  * Caller:  library/chachapoly.c
  */
-// #define MBEDTLS_POLY1305_C
+#define MBEDTLS_POLY1305_C
 
 /**
  * \def MBEDTLS_RIPEMD160_C
@@ -2796,7 +2791,7 @@
  *
  * Requires: MBEDTLS_SSL_CACHE_C
  */
-// #define MBEDTLS_SSL_CACHE_C
+#define MBEDTLS_SSL_CACHE_C
 
 /**
  * \def MBEDTLS_SSL_COOKIE_C
@@ -2806,7 +2801,7 @@
  * Module:  library/ssl_cookie.c
  * Caller:
  */
-// #define MBEDTLS_SSL_COOKIE_C
+#define MBEDTLS_SSL_COOKIE_C
 
 /**
  * \def MBEDTLS_SSL_TICKET_C
@@ -2818,7 +2813,7 @@
  *
  * Requires: MBEDTLS_CIPHER_C
  */
-// #define MBEDTLS_SSL_TICKET_C
+#define MBEDTLS_SSL_TICKET_C
 
 /**
  * \def MBEDTLS_SSL_CLI_C
@@ -2832,7 +2827,7 @@
  *
  * This module is required for SSL/TLS client support.
  */
-// #define MBEDTLS_SSL_CLI_C
+#define MBEDTLS_SSL_CLI_C
 
 /**
  * \def MBEDTLS_SSL_SRV_C
@@ -2862,7 +2857,7 @@
  *
  * This module is required for SSL/TLS.
  */
-// #define MBEDTLS_SSL_TLS_C
+#define MBEDTLS_SSL_TLS_C
 
 /**
  * \def MBEDTLS_THREADING_C
@@ -2918,7 +2913,7 @@
  *
  * This module provides run-time version information.
  */
-// #define MBEDTLS_VERSION_C
+#define MBEDTLS_VERSION_C
 
 /**
  * \def MBEDTLS_X509_USE_C
