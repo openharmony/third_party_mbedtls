@@ -89,6 +89,7 @@ source_set("mbedtls_source") {
     "library/version_features.c",
     "library/x509.c",
     "library/x509_crt.c",
+    "library/x509_crl.c",
     "library/xtea.c",
 ]
 
