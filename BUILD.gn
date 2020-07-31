@@ -13,7 +13,7 @@
 # limitations under the License.
 #
 
-import("//build/lite/config/component/zlite_component.gni")
+import("//build/lite/config/component/lite_component.gni")
 
 config("mbedtls_config") {
   include_dirs = [
@@ -102,9 +102,7 @@ configs += [
   ]
 }
 
-zlite_component("mbedtls_shared") {
-  version = "1.0.0"
-  dependences = [ ]
+lite_component("mbedtls_shared") {
   target_type = "shared_library"
   features = [
     ":mbedtls_source",
@@ -115,9 +113,7 @@ zlite_component("mbedtls_shared") {
   ]
 }
 
- zlite_component("mbedtls_static") {
-    version = "1.0.0"
-    dependences = [ ]
+lite_component("mbedtls_static") {
     target_type = "static_library"
     features = [
         ":mbedtls_source",
