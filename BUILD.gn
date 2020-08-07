@@ -14,6 +14,7 @@
 #
 
 import("//build/lite/config/component/lite_component.gni")
+import("//build/lite/ndk/ndk.gni")
 
 config("mbedtls_config") {
   include_dirs = [
@@ -121,5 +122,15 @@ lite_component("mbedtls_static") {
 
     public_configs = [
         ":mbedtls_config",
+    ]
+}
+
+ndk_lib("mbedtls_ndk") {
+    lib_extension = ".so"
+    deps = [
+        ":mbedtls_shared"
+    ]
+    head_files = [
+        "include"
     ]
 }
