@@ -28,7 +28,7 @@
 
 #ifndef MBEDTLS_CONFIG_H
 #define MBEDTLS_CONFIG_H
-
+#include <stdio.h>
 #if defined(_MSC_VER) && !defined(_CRT_SECURE_NO_DEPRECATE)
 #define _CRT_SECURE_NO_DEPRECATE 1
 #endif
@@ -153,7 +153,7 @@
  * mbedtls_platform_gmtime_r() at compile-time by using the macro
  * MBEDTLS_PLATFORM_GMTIME_R_ALT.
  */
-// #define MBEDTLS_HAVE_TIME_DATE
+#define MBEDTLS_HAVE_TIME_DATE
 
 /**
  * \def MBEDTLS_PLATFORM_MEMORY
@@ -177,7 +177,7 @@
  *
  * Enable this layer to allow use of alternative memory allocators.
  */
-// #define MBEDTLS_PLATFORM_MEMORY
+#define MBEDTLS_PLATFORM_MEMORY
 
 /**
  * \def MBEDTLS_PLATFORM_NO_STD_FUNCTIONS
@@ -196,7 +196,7 @@
  * Uncomment to prevent default assignment of standard functions in the
  * platform layer.
  */
-// #define MBEDTLS_PLATFORM_NO_STD_FUNCTIONS
+#define MBEDTLS_PLATFORM_NO_STD_FUNCTIONS
 
 /**
  * \def MBEDTLS_PLATFORM_EXIT_ALT
@@ -222,10 +222,10 @@
  * platform function
  */
 // #define MBEDTLS_PLATFORM_EXIT_ALT
-// #define MBEDTLS_PLATFORM_TIME_ALT
+#define MBEDTLS_PLATFORM_TIME_ALT
 // #define MBEDTLS_PLATFORM_FPRINTF_ALT
 // #define MBEDTLS_PLATFORM_PRINTF_ALT
-// #define MBEDTLS_PLATFORM_SNPRINTF_ALT
+#define MBEDTLS_PLATFORM_SNPRINTF_ALT
 // #define MBEDTLS_PLATFORM_NV_SEED_ALT
 // #define MBEDTLS_PLATFORM_SETUP_TEARDOWN_ALT
 
@@ -572,7 +572,7 @@
  * This option is independent of \c MBEDTLS_AES_FEWER_TABLES.
  *
  */
-// #define MBEDTLS_AES_ROM_TABLES
+#define MBEDTLS_AES_ROM_TABLES
 
 /**
  * \def MBEDTLS_AES_FEWER_TABLES
@@ -1160,7 +1160,7 @@
  *
  * Uncomment this macro to disable the built-in platform entropy functions.
  */
-// #define MBEDTLS_NO_PLATFORM_ENTROPY
+#define MBEDTLS_NO_PLATFORM_ENTROPY
 
 /**
  * \def MBEDTLS_ENTROPY_FORCE_SHA256
@@ -2486,7 +2486,9 @@
  *
  * Enable this module to enable the buffer memory allocator.
  */
-// #define MBEDTLS_MEMORY_BUFFER_ALLOC_C
+#ifdef HILINK_E2E_SECURITY_CONFIG
+#define MBEDTLS_MEMORY_BUFFER_ALLOC_C
+#endif
 
 /**
  * \def MBEDTLS_NET_C
@@ -3081,7 +3083,7 @@
 // #define MBEDTLS_PLATFORM_STD_FPRINTF      fprintf /**< Default fprintf to use, can be undefined */
 // #define MBEDTLS_PLATFORM_STD_PRINTF        printf /**< Default printf to use, can be undefined */
 /* Note: your snprintf must correctly zero-terminate the buffer! */
-// #define MBEDTLS_PLATFORM_STD_SNPRINTF    snprintf /**< Default snprintf to use, can be undefined */
+#define MBEDTLS_PLATFORM_STD_SNPRINTF    snprintf /**< Default snprintf to use, can be undefined */
 // #define MBEDTLS_PLATFORM_STD_EXIT_SUCCESS       0 /**< Default exit value to use, can be undefined */
 // #define MBEDTLS_PLATFORM_STD_EXIT_FAILURE       1 /**< Default exit value to use, can be undefined */
 // #define MBEDTLS_PLATFORM_STD_NV_SEED_READ   mbedtls_platform_std_nv_seed_read /**< Default nv_seed_read function to use, can be undefined */
@@ -3168,7 +3170,7 @@
  * Uncomment to set the maximum plaintext size of both
  * incoming and outgoing I/O buffers.
  */
-// #define MBEDTLS_SSL_MAX_CONTENT_LEN             16384
+#define MBEDTLS_SSL_MAX_CONTENT_LEN             16384
 
 /** \def MBEDTLS_SSL_IN_CONTENT_LEN
  *
@@ -3193,7 +3195,7 @@
  * Uncomment to set the maximum plaintext size of the incoming I/O buffer
  * independently of the outgoing I/O buffer.
  */
-// #define MBEDTLS_SSL_IN_CONTENT_LEN              16384
+#define MBEDTLS_SSL_IN_CONTENT_LEN              16384
 
 /** \def MBEDTLS_SSL_OUT_CONTENT_LEN
  *
@@ -3217,7 +3219,7 @@
  * Uncomment to set the maximum plaintext size of the outgoing I/O buffer
  * independently of the incoming I/O buffer.
  */
-// #define MBEDTLS_SSL_OUT_CONTENT_LEN             16384
+#define MBEDTLS_SSL_OUT_CONTENT_LEN             16384
 
 /** \def MBEDTLS_SSL_DTLS_MAX_BUFFERING
  *
@@ -3270,7 +3272,7 @@
  *            on it, and considering stronger message digests instead.
  *
  */
-// #define MBEDTLS_TLS_DEFAULT_ALLOW_SHA1_IN_CERTIFICATES
+#define MBEDTLS_TLS_DEFAULT_ALLOW_SHA1_IN_CERTIFICATES
 
 /**
  * Allow SHA-1 in the default TLS configuration for TLS 1.2 handshake
