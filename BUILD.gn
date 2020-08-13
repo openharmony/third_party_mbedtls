@@ -112,7 +112,7 @@ group("mbedtls") {
 ndk_lib("mbedtls_ndk") {
     lib_extension = ".so"
     deps = [
-        ":mbedtls_shared"
+        ":mbedtls"
     ]
     head_files = [
         "include"
