@@ -115,12 +115,12 @@ static int getrandom_wrapper( void *buf, size_t buflen, unsigned int flags )
 #endif /* __linux__ */
 
 #include <stdio.h>
+#include <fcntl.h>
+#include <unistd.h>
 
 int mbedtls_platform_entropy_poll( void *data,
                            unsigned char *output, size_t len, size_t *olen )
 {
-    FILE *file;
-    size_t read_len;
     int ret;
     ((void) data);
 
@@ -140,18 +140,18 @@ int mbedtls_platform_entropy_poll( void *data,
 
     *olen = 0;
 
-    file = fopen( "/dev/urandom", "rb" );
-    if( file == NULL )
+    int fd = open("/dev/urandom", O_RDONLY);
+    if (fd == -1)
         return( MBEDTLS_ERR_ENTROPY_SOURCE_FAILED );
 
-    read_len = fread( output, 1, len, file );
-    if( read_len != len )
+    ssize_t read_len = read(fd, output, len);
+    if ((read_len == -1) || ((size_t)read_len != len))
     {
-        fclose( file );
+        close(fd);
         return( MBEDTLS_ERR_ENTROPY_SOURCE_FAILED );
     }
 
-    fclose( file );
+    close(fd);
     *olen = len;
 
     return( 0 );
