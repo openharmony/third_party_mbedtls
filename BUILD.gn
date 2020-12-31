@@ -91,7 +91,7 @@ mbedtls_sources = [
 
 shared_library("mbedtls_shared") {
   sources = mbedtls_sources
-  output_name = "mbedtls"
+  output_name = "mbedtls_shared"
   public_configs = [
     ":mbedtls_config",
   ]
@@ -99,7 +99,7 @@ shared_library("mbedtls_shared") {
 
 static_library("mbedtls_static") {
     sources = mbedtls_sources
-    output_name = "mbedtls"
+    output_name = "mbedtls_static"
     public_configs = [
         ":mbedtls_config",
     ]
