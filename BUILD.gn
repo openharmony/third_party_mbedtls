@@ -91,8 +91,11 @@ defines = []
 
 config("mbedtls_config") {
   include_dirs = [ "./include", "./include/mbedtls" ]
-  if (ohos_kernel_type == "liteos_m" || ohos_kernel_type == "liteos_a") {
-    defines += [ "__unix__" ]
+  if (ohos_kernel_type == "liteos_m") {
+    defines += [ "__unix__", "MBEDTLS_CONFIG_FILE=<../port/config/config_liteos_m.h>" ]
+  }
+  if (ohos_kernel_type == "liteos_a") {
+    defines += [ "__unix__", "MBEDTLS_CONFIG_FILE=<../port/config/config_liteos_a.h>" ]
   }
 }
 
@@ -140,6 +143,9 @@ if (ohos_build_type == "debug") {
       "./configs",  # The directory where the custom configuration file is
                     # located
     ]
+    if (ohos_kernel_type == "liteos_m") {
+      include_dirs = [ "//kernel/liteos_m/kal/posix/include" ]
+    }
     defines = [
       "MBEDTLS_CONFIG_FILE=<config_rsa_aes_cbc.h>",
       "__unix__",
