@@ -174,5 +174,8 @@ if (ohos_build_type == "debug") {
     sources = mbedtls_sources
     output_name = "mbedtls_gt"
     public_configs = [ ":mbedtls_profile_test" ]
+    if (ohos_kernel_type == "liteos_m") {
+      deps = [ "//kernel/liteos_m/kal/posix" ]
+    }
   }
 }
