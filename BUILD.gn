@@ -110,8 +110,12 @@ lite_library("mbedtls_static") {
   target_type = "static_library"
   public_configs = [ ":mbedtls_config" ]
   if (ohos_kernel_type == "liteos_m") {
-    public_deps = [ "//kernel/liteos_m/kal/posix" ]
-    include_dirs = [ "//kernel/liteos_m/kal/posix/include", ]
+    include_dirs = [
+      "//kernel/liteos_m/kal/posix/include",
+      "//kernel/liteos_m/kernel/include",
+      "//kernel/liteos_m/utils",
+      "//third_party/musl/porting/liteos_m/kernel/include/",
+    ]
   }
   output_name = "mbedtls"
   sources = mbedtls_sources
@@ -136,16 +140,13 @@ ndk_lib("mbedtls_ndk") {
 }
 
 # for test: test profile
-if (ohos_build_type == "debug") {
+if (ohos_build_type == "debug" && ohos_kernel_type != "liteos_m") {
   config("mbedtls_profile_test") {
     include_dirs = [
       "./include",
       "./configs",  # The directory where the custom configuration file is
                     # located
     ]
-    if (ohos_kernel_type == "liteos_m") {
-      include_dirs = [ "//kernel/liteos_m/kal/posix/include" ]
-    }
     defines = [
       "MBEDTLS_CONFIG_FILE=<config_rsa_aes_cbc.h>",
       "__unix__",
@@ -174,8 +175,5 @@ if (ohos_build_type == "debug") {
     sources = mbedtls_sources
     output_name = "mbedtls_gt"
     public_configs = [ ":mbedtls_profile_test" ]
-    if (ohos_kernel_type == "liteos_m") {
-      deps = [ "//kernel/liteos_m/kal/posix" ]
-    }
   }
 }
