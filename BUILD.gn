@@ -13,9 +13,6 @@
 # limitations under the License.
 #
 
-import("//build/lite/config/component/lite_component.gni")
-import("//build/lite/ndk/ndk.gni")
-
 mbedtls_sources = [
   "library/aes.c",
   "library/aesni.c",
@@ -87,93 +84,114 @@ mbedtls_sources = [
   "library/xtea.c",
 ]
 
-defines = []
+if (defined(ohos_lite)) {
+  import("//build/lite/config/component/lite_component.gni")
+  import("//build/lite/ndk/ndk.gni")
+  defines = []
 
-config("mbedtls_config") {
-  include_dirs = [ "./include", "./include/mbedtls" ]
-  if (ohos_kernel_type == "liteos_m") {
-    defines += [ "__unix__", "MBEDTLS_CONFIG_FILE=<../port/config/config_liteos_m.h>" ]
+  config("mbedtls_config") {
+    include_dirs = [ "./include", "./include/mbedtls" ]
+    if (ohos_kernel_type == "liteos_m") {
+      defines += [ "__unix__", "MBEDTLS_CONFIG_FILE=<../port/config/config_liteos_m.h>" ]
+    }
+    if (ohos_kernel_type == "liteos_a") {
+      defines += [ "__unix__", "MBEDTLS_CONFIG_FILE=<../port/config/config_liteos_a.h>" ]
+    }
   }
-  if (ohos_kernel_type == "liteos_a") {
-    defines += [ "__unix__", "MBEDTLS_CONFIG_FILE=<../port/config/config_liteos_a.h>" ]
+
+  lite_library("mbedtls_shared") {
+    target_type = "shared_library"
+    public_configs = [ ":mbedtls_config" ]
+    output_name = "mbedtls"
+    sources = mbedtls_sources
   }
-}
 
-lite_library("mbedtls_shared") {
-  target_type = "shared_library"
-  public_configs = [ ":mbedtls_config" ]
-  output_name = "mbedtls"
-  sources = mbedtls_sources
-}
+  lite_library("mbedtls_static") {
+    target_type = "static_library"
+    public_configs = [ ":mbedtls_config" ]
+    if (ohos_kernel_type == "liteos_m") {
+      include_dirs = [
+        "//kernel/liteos_m/kal/posix/include",
+        "//kernel/liteos_m/kernel/include",
+        "//kernel/liteos_m/utils",
+        "//third_party/musl/porting/liteos_m/kernel/include/",
+      ]
+    }
+    output_name = "mbedtls"
+    sources = mbedtls_sources
+  }
 
-lite_library("mbedtls_static") {
-  target_type = "static_library"
-  public_configs = [ ":mbedtls_config" ]
-  if (ohos_kernel_type == "liteos_m") {
-    include_dirs = [
-      "//kernel/liteos_m/kal/posix/include",
-      "//kernel/liteos_m/kernel/include",
-      "//kernel/liteos_m/utils",
-      "//third_party/musl/porting/liteos_m/kernel/include/",
+  group("mbedtls") {
+    if (ohos_kernel_type == "liteos_m") {
+      deps = [ ":mbedtls_static" ]
+    } else {
+      deps = [ ":mbedtls_shared" ]
+    }
+  }
+
+  ndk_lib("mbedtls_ndk") {
+    if (ohos_kernel_type == "liteos_m") {
+      lib_extension = ".a"
+    } else {
+      lib_extension = ".so"
+    }
+    deps = [ ":mbedtls" ]
+    head_files = [ "include" ]
+  }
+
+  # for test: test profile
+  if (ohos_build_type == "debug" && ohos_kernel_type != "liteos_m") {
+    config("mbedtls_profile_test") {
+      include_dirs = [
+        "./include",
+        "./configs",  # The directory where the custom configuration file is
+                      # located
+      ]
+      defines = [
+        "MBEDTLS_CONFIG_FILE=<config_rsa_aes_cbc.h>",
+        "__unix__",
+      ]
+      ldflags = [
+        "-s",
+        "-w",
+      ]
+    }
+
+    mbedtls_sources += [
+      "library/certs.c",
+      "library/debug.c",
+      "library/pkcs11.c",
+      "library/ssl_cache.c",
+      "library/ssl_cookie.c",
+      "library/ssl_srv.c",
+      "library/ssl_ticket.c",
+      "library/x509_create.c",
+      "library/x509_csr.c",
+      "library/x509write_crt.c",
+      "library/x509write_csr.c",
     ]
-  }
-  output_name = "mbedtls"
-  sources = mbedtls_sources
-}
 
-group("mbedtls") {
-  if (ohos_kernel_type == "liteos_m") {
-    deps = [ ":mbedtls_static" ]
-  } else {
+    static_library("mbedtls_gt") {
+      sources = mbedtls_sources
+      output_name = "mbedtls_gt"
+      public_configs = [ ":mbedtls_profile_test" ]
+    }
+  }
+} else {
+  import("//build/ohos.gni")
+  config("mbedtls_config") {
+    include_dirs = [ "./include", "./include/mbedtls" ]
+  }
+
+  ohos_shared_library("mbedtls_shared") {
+    public_configs = [ ":mbedtls_config" ]
+    output_name = "mbedtls"
+    sources = mbedtls_sources
+  }
+
+  group("mbedtls") {
     deps = [ ":mbedtls_shared" ]
   }
+
 }
 
-ndk_lib("mbedtls_ndk") {
-  if (ohos_kernel_type == "liteos_m") {
-    lib_extension = ".a"
-  } else {
-    lib_extension = ".so"
-  }
-  deps = [ ":mbedtls" ]
-  head_files = [ "include" ]
-}
-
-# for test: test profile
-if (ohos_build_type == "debug" && ohos_kernel_type != "liteos_m") {
-  config("mbedtls_profile_test") {
-    include_dirs = [
-      "./include",
-      "./configs",  # The directory where the custom configuration file is
-                    # located
-    ]
-    defines = [
-      "MBEDTLS_CONFIG_FILE=<config_rsa_aes_cbc.h>",
-      "__unix__",
-    ]
-    ldflags = [
-      "-s",
-      "-w",
-    ]
-  }
-
-  mbedtls_sources += [
-    "library/certs.c",
-    "library/debug.c",
-    "library/pkcs11.c",
-    "library/ssl_cache.c",
-    "library/ssl_cookie.c",
-    "library/ssl_srv.c",
-    "library/ssl_ticket.c",
-    "library/x509_create.c",
-    "library/x509_csr.c",
-    "library/x509write_crt.c",
-    "library/x509write_csr.c",
-  ]
-
-  static_library("mbedtls_gt") {
-    sources = mbedtls_sources
-    output_name = "mbedtls_gt"
-    public_configs = [ ":mbedtls_profile_test" ]
-  }
-}
