@@ -184,7 +184,6 @@ if (defined(ohos_lite)) {
   }
 
   ohos_shared_library("mbedtls_shared") {
-    target_type = "shared_library"
     public_configs = [ ":mbedtls_config" ]
     output_name = "mbedtls"
     sources = mbedtls_sources
