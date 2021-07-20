@@ -185,6 +185,9 @@ pre_initialize_variables () {
         export MAKEFLAGS="-j"
     fi
 
+    # Include more verbose output for failing tests run by CMake
+    export CTEST_OUTPUT_ON_FAILURE=1
+
     # CFLAGS and LDFLAGS for Asan builds that don't use CMake
     ASAN_CFLAGS='-Werror -Wall -Wextra -fsanitize=address,undefined -fno-sanitize-recover=all'
 
@@ -887,11 +890,21 @@ component_test_no_hmac_drbg () {
     CC=gcc cmake -D CMAKE_BUILD_TYPE:String=Asan .
     make
 
-    msg "test: no HMAC_DRBG"
+    msg "test: Full minus HMAC_DRBG - main suites"
     make test
 
-    # No ssl-opt.sh/compat.sh as they never use HMAC_DRBG so far,
-    # so there's little value in running those lengthy tests here.
+    # Normally our ECDSA implementation uses deterministic ECDSA. But since
+    # HMAC_DRBG is disabled in this configuration, randomized ECDSA is used
+    # instead.
+    # Test SSL with non-deterministic ECDSA. Only test features that
+    # might be affected by how ECDSA signature is performed.
+    msg "test: Full minus HMAC_DRBG - ssl-opt.sh (subset)"
+    if_build_succeeded tests/ssl-opt.sh -f 'Default\|SSL async private: sign'
+
+    # To save time, only test one protocol version, since this part of
+    # the protocol is identical in (D)TLS up to 1.2.
+    msg "test: Full minus HMAC_DRBG - compat.sh (ECDSA)"
+    if_build_succeeded tests/compat.sh -m tls1_2 -t 'ECDSA'
 }
 
 component_test_no_drbg_all_hashes () {
@@ -1311,7 +1324,7 @@ component_test_malloc_0_null () {
     msg "build: malloc(0) returns NULL (ASan+UBSan build)"
     scripts/config.pl full
     scripts/config.pl unset MBEDTLS_MEMORY_BUFFER_ALLOC_C
-    make CC=gcc CFLAGS="'-DMBEDTLS_CONFIG_FILE=\"$PWD/tests/configs/config-wrapper-malloc-0-null.h\"' -O -Werror -Wall -Wextra -fsanitize=address,undefined" LDFLAGS='-fsanitize=address,undefined'
+    make CC=gcc CFLAGS="'-DMBEDTLS_CONFIG_FILE=\"$PWD/tests/configs/config-wrapper-malloc-0-null.h\"' -O $ASAN_CFLAGS" LDFLAGS="$ASAN_CFLAGS"
 
     msg "test: malloc(0) returns NULL (ASan+UBSan build)"
     make test
@@ -1495,6 +1508,20 @@ component_test_no_64bit_multiplication () {
     make CFLAGS='-Werror -O1'
 
     msg "test: MBEDTLS_NO_64BIT_MULTIPLICATION native" # ~ 10s
+    make test
+}
+
+component_test_no_strings () {
+    msg "build: no strings" # ~10s
+    scripts/config.pl full
+    # Disable options that activate a large amount of string constants.
+    scripts/config.pl unset MBEDTLS_DEBUG_C
+    scripts/config.pl unset MBEDTLS_ERROR_C
+    scripts/config.pl set MBEDTLS_ERROR_STRERROR_DUMMY
+    scripts/config.pl unset MBEDTLS_VERSION_FEATURES
+    make CFLAGS='-Werror -Os'
+
+    msg "test: no strings" # ~ 10s
     make test
 }
 
