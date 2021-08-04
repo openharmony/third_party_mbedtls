@@ -23,6 +23,15 @@
 #endif
 #endif
 
+/*
+ * for arc4random_buf() from <stdlib.h>
+ */
+#if defined(__NetBSD__)
+#define _NETBSD_SOURCE 1
+#elif defined(__OpenBSD__)
+#define _BSD_SOURCE 1
+#endif
+
 #if !defined(MBEDTLS_CONFIG_FILE)
 #include <mbedtls/config.h>
 #else
@@ -167,6 +176,10 @@ void execute_function_ptr(TestWrapper_t fp, void **params)
 #else
     fp( params );
 #endif
+
+#if defined(MBEDTLS_TEST_MUTEX_USAGE)
+    mbedtls_test_mutex_usage_check( );
+#endif /* MBEDTLS_TEST_MUTEX_USAGE */
 }
 
 /**

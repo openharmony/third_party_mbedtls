@@ -44,7 +44,7 @@
  *  **********
  */
 
-#if defined(__linux__)
+#if defined(__linux__) && !defined(_GNU_SOURCE)
 /* Ensure that syscall() is available even when compiling with -std=c99 */
 #define _GNU_SOURCE
 #endif
@@ -140,12 +140,12 @@ static int getrandom_wrapper( void *buf, size_t buflen, unsigned int flags )
 #endif /* __linux__ */
 
 #include <stdio.h>
-#include <fcntl.h>
-#include <unistd.h>
 
 int mbedtls_platform_entropy_poll( void *data,
                            unsigned char *output, size_t len, size_t *olen )
 {
+    FILE *file;
+    size_t read_len;
     int ret;
     ((void) data);
 
@@ -165,18 +165,18 @@ int mbedtls_platform_entropy_poll( void *data,
 
     *olen = 0;
 
-    int fd = open("/dev/urandom", O_RDONLY);
-    if (fd == -1)
+    file = fopen( "/dev/urandom", "rb" );
+    if( file == NULL )
         return( MBEDTLS_ERR_ENTROPY_SOURCE_FAILED );
 
-    ssize_t read_len = read(fd, output, len);
-    if ((read_len == -1) || ((size_t)read_len != len))
+    read_len = fread( output, 1, len, file );
+    if( read_len != len )
     {
-        close(fd);
+        fclose( file );
         return( MBEDTLS_ERR_ENTROPY_SOURCE_FAILED );
     }
 
-    close(fd);
+    fclose( file );
     *olen = len;
 
     return( 0 );
