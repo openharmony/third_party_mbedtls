@@ -51,6 +51,10 @@
         <filefilterlist>
             <filefilter name="defaultFilter" desc="Files not to check">
                 <filteritem type="filename" name="*.doxyfile" desc="doxy file, not license statement."/>
+				<filteritem type="filename" name="*.pem" desc="Test file, not license statement."/>
+				<filteritem type="filename" name="*.der" desc="Test file, not license statement."/>
+				<filteritem type="filename" name="*.fmt" desc="Test file, not license statement."/>
+				<filteritem type="filename" name="hash_file*" desc="Test file, not license statement."/>
             </filefilter>
         </filefilterlist>
     </oatconfig>
