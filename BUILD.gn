@@ -90,12 +90,21 @@ if (defined(ohos_lite)) {
   defines = []
 
   config("mbedtls_config") {
-    include_dirs = [ "./include", "./include/mbedtls" ]
+    include_dirs = [
+      "./include",
+      "./include/mbedtls",
+    ]
     if (ohos_kernel_type == "liteos_m") {
-      defines += [ "__unix__", "MBEDTLS_CONFIG_FILE=<../port/config/config_liteos_m.h>" ]
+      defines += [
+        "__unix__",
+        "MBEDTLS_CONFIG_FILE=<../port/config/config_liteos_m.h>",
+      ]
     }
     if (ohos_kernel_type == "liteos_a") {
-      defines += [ "__unix__", "MBEDTLS_CONFIG_FILE=<../port/config/config_liteos_a.h>" ]
+      defines += [
+        "__unix__",
+        "MBEDTLS_CONFIG_FILE=<../port/config/config_liteos_a.h>",
+      ]
     }
   }
 
@@ -180,18 +189,21 @@ if (defined(ohos_lite)) {
 } else {
   import("//build/ohos.gni")
   config("mbedtls_config") {
-    include_dirs = [ "./include", "./include/mbedtls" ]
+    include_dirs = [
+      "./include",
+      "./include/mbedtls",
+    ]
   }
 
   ohos_shared_library("mbedtls_shared") {
     public_configs = [ ":mbedtls_config" ]
     output_name = "mbedtls"
+    subsystem_name = "common"
+    part_name = "dsoftbus_standard"
     sources = mbedtls_sources
   }
 
   group("mbedtls") {
     deps = [ ":mbedtls_shared" ]
   }
-
 }
-
