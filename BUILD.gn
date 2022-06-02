@@ -118,7 +118,7 @@ if (defined(ohos_lite)) {
     public_configs = [ ":mbedtls_config" ]
     output_name = "mbedtls"
     subsystem_name = "common"
-    part_name = "dsoftbus_standard"
+    part_name = "dsoftbus"
     sources = MBEDTLS_SOURCES
   }
 
