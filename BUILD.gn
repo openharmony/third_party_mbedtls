@@ -120,6 +120,10 @@ if (defined(ohos_lite)) {
     subsystem_name = "common"
     part_name = "dsoftbus_standard"
     sources = MBEDTLS_SOURCES
+    install_images = [
+      "system",
+      "updater",
+    ]
   }
 
   group("mbedtls") {
