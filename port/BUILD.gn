@@ -20,7 +20,7 @@ if (ohos_build_type == "debug") {
     include_dirs = [
       "./include",
       "//third_party/mbedtls/include",
-      "//utils/native/lite/include",
+      "//commonlibrary/utils_lite/include",
       "//third_party/bounds_checking_function/include",
     ]
   }
