@@ -131,6 +131,28 @@
 #define MBEDTLS_X509_BADCRL_BAD_PK           0x040000  /**< The CRL is signed with an unacceptable PK alg (eg RSA vs ECDSA). */
 #define MBEDTLS_X509_BADCRL_BAD_KEY          0x080000  /**< The CRL is signed with an unacceptable key (eg bad curve, RSA too short). */
 
+/*
+ * X.509 v3 Subject Alternative Name types.
+ *      otherName                       [0]     OtherName,
+ *      rfc822Name                      [1]     IA5String,
+ *      dNSName                         [2]     IA5String,
+ *      x400Address                     [3]     ORAddress,
+ *      directoryName                   [4]     Name,
+ *      ediPartyName                    [5]     EDIPartyName,
+ *      uniformResourceIdentifier       [6]     IA5String,
+ *      iPAddress                       [7]     OCTET STRING,
+ *      registeredID                    [8]     OBJECT IDENTIFIER
+ */
+#define MBEDTLS_X509_SAN_OTHER_NAME                      0
+#define MBEDTLS_X509_SAN_RFC822_NAME                     1
+#define MBEDTLS_X509_SAN_DNS_NAME                        2
+#define MBEDTLS_X509_SAN_X400_ADDRESS_NAME               3
+#define MBEDTLS_X509_SAN_DIRECTORY_NAME                  4
+#define MBEDTLS_X509_SAN_EDI_PARTY_NAME                  5
+#define MBEDTLS_X509_SAN_UNIFORM_RESOURCE_IDENTIFIER     6
+#define MBEDTLS_X509_SAN_IP_ADDRESS                      7
+#define MBEDTLS_X509_SAN_REGISTERED_ID                   8
+
 /* \} name */
 /* \} addtogroup x509_module */
 
