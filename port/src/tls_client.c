@@ -17,16 +17,12 @@
 
 #include <stdio.h>
 #include <string.h>
-
 #include "securec.h"
+//#include "securec.h"
 #include "tls_certificate.h"
 #include "mbedtls_log.h"
 
-#if !defined(MBEDTLS_CONFIG_FILE)
-#include "mbedtls/config.h"
-#else
-#include MBEDTLS_CONFIG_FILE
-#endif
+#include "mbedtls/build_info.h"
 
 static void SslDebug(void *ctx, int level, const char *file, int line, const char *str)
 {

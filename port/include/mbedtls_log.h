@@ -18,7 +18,7 @@
 
 #include <stdio.h>
 
-#include "hilog/log.h"
+//#include "hilog/log.h"
 
 #undef LOG_DOMAIN
 #undef LOG_TAG
