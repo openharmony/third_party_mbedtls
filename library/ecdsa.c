@@ -2,13 +2,7 @@
  *  Elliptic curve DSA
  *
  *  Copyright The Mbed TLS Contributors
- *  SPDX-License-Identifier: Apache-2.0 OR GPL-2.0-or-later
- *
- *  This file is provided under the Apache License 2.0, or the
- *  GNU General Public License v2.0 or later.
- *
- *  **********
- *  Apache License 2.0:
+ *  SPDX-License-Identifier: Apache-2.0
  *
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may
  *  not use this file except in compliance with the License.
@@ -21,27 +15,6 @@
  *  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
- *
- *  **********
- *
- *  **********
- *  GNU General Public License v2.0 or later:
- *
- *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2 of the License, or
- *  (at your option) any later version.
- *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License along
- *  with this program; if not, write to the Free Software Foundation, Inc.,
- *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- *  **********
  */
 
 /*
@@ -50,11 +23,7 @@
  * SEC1 http://www.secg.org/index.php?action=secg,docs_secg
  */
 
-#if !defined(MBEDTLS_CONFIG_FILE)
-#include "mbedtls/config.h"
-#else
-#include MBEDTLS_CONFIG_FILE
-#endif
+#include "common.h"
 
 #if defined(MBEDTLS_ECDSA_C)
 
@@ -76,6 +45,7 @@
 #endif
 
 #include "mbedtls/platform_util.h"
+#include "mbedtls/error.h"
 
 /* Parameter validation macros based on platform_util.h */
 #define ECDSA_VALIDATE_RET( cond )    \
@@ -257,7 +227,7 @@ static void ecdsa_restart_det_free( mbedtls_ecdsa_restart_det_ctx *ctx )
 static int derive_mpi( const mbedtls_ecp_group *grp, mbedtls_mpi *x,
                        const unsigned char *buf, size_t blen )
 {
-    int ret;
+    int ret = MBEDTLS_ERR_ERROR_CORRUPTION_DETECTED;
     size_t n_size = ( grp->nbits + 7 ) / 8;
     size_t use_size = blen > n_size ? n_size : blen;
 
@@ -294,7 +264,7 @@ static int ecdsa_sign_restartable( mbedtls_ecp_group *grp,
     mbedtls_mpi *pk = &k, *pr = r;
 
     /* Fail cleanly on curves such as Curve25519 that can't be used for ECDSA */
-    if( grp->N.p == NULL )
+    if( ! mbedtls_ecdsa_can_do( grp->id ) || grp->N.p == NULL )
         return( MBEDTLS_ERR_ECP_BAD_INPUT_DATA );
 
     /* Make sure d is in range 1..n-1 */
@@ -413,6 +383,20 @@ cleanup:
     return( ret );
 }
 
+int mbedtls_ecdsa_can_do( mbedtls_ecp_group_id gid )
+{
+    switch( gid )
+    {
+#ifdef MBEDTLS_ECP_DP_CURVE25519_ENABLED
+        case MBEDTLS_ECP_DP_CURVE25519: return 0;
+#endif
+#ifdef MBEDTLS_ECP_DP_CURVE448_ENABLED
+        case MBEDTLS_ECP_DP_CURVE448: return 0;
+#endif
+    default: return 1;
+    }
+}
+
 /*
  * Compute ECDSA signature of a hashed message
  */
@@ -436,6 +420,9 @@ int mbedtls_ecdsa_sign( mbedtls_ecp_group *grp, mbedtls_mpi *r, mbedtls_mpi *s,
 #if defined(MBEDTLS_ECDSA_DETERMINISTIC)
 /*
  * Deterministic signature wrapper
+ *
+ * note:    The f_rng_blind parameter must not be NULL.
+ *
  */
 static int ecdsa_sign_det_restartable( mbedtls_ecp_group *grp,
                     mbedtls_mpi *r, mbedtls_mpi *s,
@@ -445,7 +432,7 @@ static int ecdsa_sign_det_restartable( mbedtls_ecp_group *grp,
                     void *p_rng_blind,
                     mbedtls_ecdsa_restart_ctx *rs_ctx )
 {
-    int ret;
+    int ret = MBEDTLS_ERR_ERROR_CORRUPTION_DETECTED;
     mbedtls_hmac_drbg_context rng_ctx;
     mbedtls_hmac_drbg_context *p_rng = &rng_ctx;
     unsigned char data[2 * MBEDTLS_ECP_MAX_BYTES];
@@ -486,73 +473,14 @@ static int ecdsa_sign_det_restartable( mbedtls_ecp_group *grp,
 sign:
 #endif
 #if defined(MBEDTLS_ECDSA_SIGN_ALT)
+    (void) f_rng_blind;
+    (void) p_rng_blind;
     ret = mbedtls_ecdsa_sign( grp, r, s, d, buf, blen,
                               mbedtls_hmac_drbg_random, p_rng );
 #else
-    if( f_rng_blind != NULL )
-        ret = ecdsa_sign_restartable( grp, r, s, d, buf, blen,
-                                      mbedtls_hmac_drbg_random, p_rng,
-                                      f_rng_blind, p_rng_blind, rs_ctx );
-    else
-    {
-        mbedtls_hmac_drbg_context *p_rng_blind_det;
-
-#if !defined(MBEDTLS_ECP_RESTARTABLE)
-        /*
-         * To avoid reusing rng_ctx and risking incorrect behavior we seed a
-         * second HMAC-DRBG with the same seed. We also apply a label to avoid
-         * reusing the bits of the ephemeral key for blinding and eliminate the
-         * risk that they leak this way.
-         */
-        const char* blind_label = "BLINDING CONTEXT";
-        mbedtls_hmac_drbg_context rng_ctx_blind;
-
-        mbedtls_hmac_drbg_init( &rng_ctx_blind );
-        p_rng_blind_det = &rng_ctx_blind;
-
-        mbedtls_hmac_drbg_seed_buf( p_rng_blind_det, md_info,
-                                    data, 2 * grp_len );
-        ret = mbedtls_hmac_drbg_update_ret( p_rng_blind_det,
-                                            (const unsigned char*) blind_label,
-                                            strlen( blind_label ) );
-        if( ret != 0 )
-        {
-            mbedtls_hmac_drbg_free( &rng_ctx_blind );
-            goto cleanup;
-        }
-#else
-        /*
-         * In the case of restartable computations we would either need to store
-         * the second RNG in the restart context too or set it up at every
-         * restart. The first option would penalize the correct application of
-         * the function and the second would defeat the purpose of the
-         * restartable feature.
-         *
-         * Therefore in this case we reuse the original RNG. This comes with the
-         * price that the resulting signature might not be a valid deterministic
-         * ECDSA signature with a very low probability (same magnitude as
-         * successfully guessing the private key). However even then it is still
-         * a valid ECDSA signature.
-         */
-        p_rng_blind_det = p_rng;
-#endif /* MBEDTLS_ECP_RESTARTABLE */
-
-        /*
-         * Since the output of the RNGs is always the same for the same key and
-         * message, this limits the efficiency of blinding and leaks information
-         * through side channels. After mbedtls_ecdsa_sign_det() is removed NULL
-         * won't be a valid value for f_rng_blind anymore. Therefore it should
-         * be checked by the caller and this branch and check can be removed.
-         */
-        ret = ecdsa_sign_restartable( grp, r, s, d, buf, blen,
-                                      mbedtls_hmac_drbg_random, p_rng,
-                                      mbedtls_hmac_drbg_random, p_rng_blind_det,
-                                      rs_ctx );
-
-#if !defined(MBEDTLS_ECP_RESTARTABLE)
-        mbedtls_hmac_drbg_free( &rng_ctx_blind );
-#endif
-    }
+    ret = ecdsa_sign_restartable( grp, r, s, d, buf, blen,
+                                  mbedtls_hmac_drbg_random, p_rng,
+                                  f_rng_blind, p_rng_blind, rs_ctx );
 #endif /* MBEDTLS_ECDSA_SIGN_ALT */
 
 cleanup:
@@ -565,23 +493,8 @@ cleanup:
 }
 
 /*
- * Deterministic signature wrappers
+ * Deterministic signature wrapper
  */
-int mbedtls_ecdsa_sign_det( mbedtls_ecp_group *grp, mbedtls_mpi *r,
-                            mbedtls_mpi *s, const mbedtls_mpi *d,
-                            const unsigned char *buf, size_t blen,
-                            mbedtls_md_type_t md_alg )
-{
-    ECDSA_VALIDATE_RET( grp   != NULL );
-    ECDSA_VALIDATE_RET( r     != NULL );
-    ECDSA_VALIDATE_RET( s     != NULL );
-    ECDSA_VALIDATE_RET( d     != NULL );
-    ECDSA_VALIDATE_RET( buf   != NULL || blen == 0 );
-
-    return( ecdsa_sign_det_restartable( grp, r, s, d, buf, blen, md_alg,
-                                        NULL, NULL, NULL ) );
-}
-
 int mbedtls_ecdsa_sign_det_ext( mbedtls_ecp_group *grp, mbedtls_mpi *r,
                                 mbedtls_mpi *s, const mbedtls_mpi *d,
                                 const unsigned char *buf, size_t blen,
@@ -613,7 +526,7 @@ static int ecdsa_verify_restartable( mbedtls_ecp_group *grp,
                                      const mbedtls_mpi *r, const mbedtls_mpi *s,
                                      mbedtls_ecdsa_restart_ctx *rs_ctx )
 {
-    int ret;
+    int ret = MBEDTLS_ERR_ERROR_CORRUPTION_DETECTED;
     mbedtls_mpi e, s_inv, u1, u2;
     mbedtls_ecp_point R;
     mbedtls_mpi *pu1 = &u1, *pu2 = &u2;
@@ -623,7 +536,7 @@ static int ecdsa_verify_restartable( mbedtls_ecp_group *grp,
     mbedtls_mpi_init( &u1 ); mbedtls_mpi_init( &u2 );
 
     /* Fail cleanly on curves such as Curve25519 that can't be used for ECDSA */
-    if( grp->N.p == NULL )
+    if( ! mbedtls_ecdsa_can_do( grp->id ) || grp->N.p == NULL )
         return( MBEDTLS_ERR_ECP_BAD_INPUT_DATA );
 
     ECDSA_RS_ENTER( ver );
@@ -735,10 +648,11 @@ int mbedtls_ecdsa_verify( mbedtls_ecp_group *grp,
  * Convert a signature (given by context) to ASN.1
  */
 static int ecdsa_signature_to_asn1( const mbedtls_mpi *r, const mbedtls_mpi *s,
-                                    unsigned char *sig, size_t *slen )
+                                    unsigned char *sig, size_t sig_size,
+                                    size_t *slen )
 {
-    int ret;
-    unsigned char buf[MBEDTLS_ECDSA_MAX_LEN];
+    int ret = MBEDTLS_ERR_ERROR_CORRUPTION_DETECTED;
+    unsigned char buf[MBEDTLS_ECDSA_MAX_LEN] = {0};
     unsigned char *p = buf + sizeof( buf );
     size_t len = 0;
 
@@ -748,6 +662,9 @@ static int ecdsa_signature_to_asn1( const mbedtls_mpi *r, const mbedtls_mpi *s,
     MBEDTLS_ASN1_CHK_ADD( len, mbedtls_asn1_write_len( &p, buf, len ) );
     MBEDTLS_ASN1_CHK_ADD( len, mbedtls_asn1_write_tag( &p, buf,
                                        MBEDTLS_ASN1_CONSTRUCTED | MBEDTLS_ASN1_SEQUENCE ) );
+
+    if( len > sig_size )
+        return( MBEDTLS_ERR_ECP_BUFFER_TOO_SMALL );
 
     memcpy( sig, p, len );
     *slen = len;
@@ -761,17 +678,20 @@ static int ecdsa_signature_to_asn1( const mbedtls_mpi *r, const mbedtls_mpi *s,
 int mbedtls_ecdsa_write_signature_restartable( mbedtls_ecdsa_context *ctx,
                            mbedtls_md_type_t md_alg,
                            const unsigned char *hash, size_t hlen,
-                           unsigned char *sig, size_t *slen,
+                           unsigned char *sig, size_t sig_size, size_t *slen,
                            int (*f_rng)(void *, unsigned char *, size_t),
                            void *p_rng,
                            mbedtls_ecdsa_restart_ctx *rs_ctx )
 {
-    int ret;
+    int ret = MBEDTLS_ERR_ERROR_CORRUPTION_DETECTED;
     mbedtls_mpi r, s;
-    ECDSA_VALIDATE_RET( ctx  != NULL );
-    ECDSA_VALIDATE_RET( hash != NULL );
-    ECDSA_VALIDATE_RET( sig  != NULL );
-    ECDSA_VALIDATE_RET( slen != NULL );
+    ECDSA_VALIDATE_RET( ctx   != NULL );
+    ECDSA_VALIDATE_RET( hash  != NULL );
+    ECDSA_VALIDATE_RET( sig   != NULL );
+    ECDSA_VALIDATE_RET( slen  != NULL );
+
+    if( f_rng == NULL )
+        return( MBEDTLS_ERR_ECP_BAD_INPUT_DATA );
 
     mbedtls_mpi_init( &r );
     mbedtls_mpi_init( &s );
@@ -796,7 +716,7 @@ int mbedtls_ecdsa_write_signature_restartable( mbedtls_ecdsa_context *ctx,
 #endif /* MBEDTLS_ECDSA_SIGN_ALT */
 #endif /* MBEDTLS_ECDSA_DETERMINISTIC */
 
-    MBEDTLS_MPI_CHK( ecdsa_signature_to_asn1( &r, &s, sig, slen ) );
+    MBEDTLS_MPI_CHK( ecdsa_signature_to_asn1( &r, &s, sig, sig_size, slen ) );
 
 cleanup:
     mbedtls_mpi_free( &r );
@@ -811,7 +731,7 @@ cleanup:
 int mbedtls_ecdsa_write_signature( mbedtls_ecdsa_context *ctx,
                                  mbedtls_md_type_t md_alg,
                                  const unsigned char *hash, size_t hlen,
-                                 unsigned char *sig, size_t *slen,
+                                 unsigned char *sig, size_t sig_size, size_t *slen,
                                  int (*f_rng)(void *, unsigned char *, size_t),
                                  void *p_rng )
 {
@@ -820,24 +740,9 @@ int mbedtls_ecdsa_write_signature( mbedtls_ecdsa_context *ctx,
     ECDSA_VALIDATE_RET( sig  != NULL );
     ECDSA_VALIDATE_RET( slen != NULL );
     return( mbedtls_ecdsa_write_signature_restartable(
-                ctx, md_alg, hash, hlen, sig, slen, f_rng, p_rng, NULL ) );
+                ctx, md_alg, hash, hlen, sig, sig_size, slen,
+                f_rng, p_rng, NULL ) );
 }
-
-#if !defined(MBEDTLS_DEPRECATED_REMOVED) && \
-    defined(MBEDTLS_ECDSA_DETERMINISTIC)
-int mbedtls_ecdsa_write_signature_det( mbedtls_ecdsa_context *ctx,
-                               const unsigned char *hash, size_t hlen,
-                               unsigned char *sig, size_t *slen,
-                               mbedtls_md_type_t md_alg )
-{
-    ECDSA_VALIDATE_RET( ctx  != NULL );
-    ECDSA_VALIDATE_RET( hash != NULL );
-    ECDSA_VALIDATE_RET( sig  != NULL );
-    ECDSA_VALIDATE_RET( slen != NULL );
-    return( mbedtls_ecdsa_write_signature( ctx, md_alg, hash, hlen, sig, slen,
-                                   NULL, NULL ) );
-}
-#endif
 
 /*
  * Read and check signature
@@ -861,7 +766,7 @@ int mbedtls_ecdsa_read_signature_restartable( mbedtls_ecdsa_context *ctx,
                           const unsigned char *sig, size_t slen,
                           mbedtls_ecdsa_restart_ctx *rs_ctx )
 {
-    int ret;
+    int ret = MBEDTLS_ERR_ERROR_CORRUPTION_DETECTED;
     unsigned char *p = (unsigned char *) sig;
     const unsigned char *end = sig + slen;
     size_t len;
@@ -882,8 +787,8 @@ int mbedtls_ecdsa_read_signature_restartable( mbedtls_ecdsa_context *ctx,
 
     if( p + len != end )
     {
-        ret = MBEDTLS_ERR_ECP_BAD_INPUT_DATA +
-              MBEDTLS_ERR_ASN1_LENGTH_MISMATCH;
+        ret = MBEDTLS_ERROR_ADD( MBEDTLS_ERR_ECP_BAD_INPUT_DATA,
+              MBEDTLS_ERR_ASN1_LENGTH_MISMATCH );
         goto cleanup;
     }
 
@@ -943,7 +848,7 @@ int mbedtls_ecdsa_genkey( mbedtls_ecdsa_context *ctx, mbedtls_ecp_group_id gid,
  */
 int mbedtls_ecdsa_from_keypair( mbedtls_ecdsa_context *ctx, const mbedtls_ecp_keypair *key )
 {
-    int ret;
+    int ret = MBEDTLS_ERR_ERROR_CORRUPTION_DETECTED;
     ECDSA_VALIDATE_RET( ctx != NULL );
     ECDSA_VALIDATE_RET( key != NULL );
 

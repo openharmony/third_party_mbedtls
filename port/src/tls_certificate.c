@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-#include "mbedtls/certs.h"
+#include "test/certs.h"
 
 // huawei
 const char G_MBEDTLS_ROOT_CERTIFICATE[] =

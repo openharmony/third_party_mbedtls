@@ -2,13 +2,7 @@
  *  PKCS#12 Personal Information Exchange Syntax
  *
  *  Copyright The Mbed TLS Contributors
- *  SPDX-License-Identifier: Apache-2.0 OR GPL-2.0-or-later
- *
- *  This file is provided under the Apache License 2.0, or the
- *  GNU General Public License v2.0 or later.
- *
- *  **********
- *  Apache License 2.0:
+ *  SPDX-License-Identifier: Apache-2.0
  *
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may
  *  not use this file except in compliance with the License.
@@ -21,27 +15,6 @@
  *  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
- *
- *  **********
- *
- *  **********
- *  GNU General Public License v2.0 or later:
- *
- *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2 of the License, or
- *  (at your option) any later version.
- *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License along
- *  with this program; if not, write to the Free Software Foundation, Inc.,
- *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- *  **********
  */
 /*
  *  The PKCS #12 Personal Information Exchange Syntax Standard v1.1
@@ -50,11 +23,7 @@
  *  ftp://ftp.rsasecurity.com/pub/pkcs/pkcs-12/pkcs-12v1-1.asn
  */
 
-#if !defined(MBEDTLS_CONFIG_FILE)
-#include "mbedtls/config.h"
-#else
-#include MBEDTLS_CONFIG_FILE
-#endif
+#include "common.h"
 
 #if defined(MBEDTLS_PKCS12_C)
 
@@ -62,12 +31,9 @@
 #include "mbedtls/asn1.h"
 #include "mbedtls/cipher.h"
 #include "mbedtls/platform_util.h"
+#include "mbedtls/error.h"
 
 #include <string.h>
-
-#if defined(MBEDTLS_ARC4_C)
-#include "mbedtls/arc4.h"
-#endif
 
 #if defined(MBEDTLS_DES_C)
 #include "mbedtls/des.h"
@@ -78,7 +44,7 @@
 static int pkcs12_parse_pbe_params( mbedtls_asn1_buf *params,
                                     mbedtls_asn1_buf *salt, int *iterations )
 {
-    int ret;
+    int ret = MBEDTLS_ERR_ERROR_CORRUPTION_DETECTED;
     unsigned char **p = &params->p;
     const unsigned char *end = params->p + params->len;
 
@@ -90,21 +56,21 @@ static int pkcs12_parse_pbe_params( mbedtls_asn1_buf *params,
      *
      */
     if( params->tag != ( MBEDTLS_ASN1_CONSTRUCTED | MBEDTLS_ASN1_SEQUENCE ) )
-        return( MBEDTLS_ERR_PKCS12_PBE_INVALID_FORMAT +
-                MBEDTLS_ERR_ASN1_UNEXPECTED_TAG );
+        return( MBEDTLS_ERROR_ADD( MBEDTLS_ERR_PKCS12_PBE_INVALID_FORMAT,
+                MBEDTLS_ERR_ASN1_UNEXPECTED_TAG ) );
 
     if( ( ret = mbedtls_asn1_get_tag( p, end, &salt->len, MBEDTLS_ASN1_OCTET_STRING ) ) != 0 )
-        return( MBEDTLS_ERR_PKCS12_PBE_INVALID_FORMAT + ret );
+        return( MBEDTLS_ERROR_ADD( MBEDTLS_ERR_PKCS12_PBE_INVALID_FORMAT, ret ) );
 
     salt->p = *p;
     *p += salt->len;
 
     if( ( ret = mbedtls_asn1_get_int( p, end, iterations ) ) != 0 )
-        return( MBEDTLS_ERR_PKCS12_PBE_INVALID_FORMAT + ret );
+        return( MBEDTLS_ERROR_ADD( MBEDTLS_ERR_PKCS12_PBE_INVALID_FORMAT, ret ) );
 
     if( *p != end )
-        return( MBEDTLS_ERR_PKCS12_PBE_INVALID_FORMAT +
-                MBEDTLS_ERR_ASN1_LENGTH_MISMATCH );
+        return( MBEDTLS_ERROR_ADD( MBEDTLS_ERR_PKCS12_PBE_INVALID_FORMAT,
+                MBEDTLS_ERR_ASN1_LENGTH_MISMATCH ) );
 
     return( 0 );
 }
@@ -154,47 +120,6 @@ static int pkcs12_pbe_derive_key_iv( mbedtls_asn1_buf *pbe_params, mbedtls_md_ty
 }
 
 #undef PKCS12_MAX_PWDLEN
-
-int mbedtls_pkcs12_pbe_sha1_rc4_128( mbedtls_asn1_buf *pbe_params, int mode,
-                             const unsigned char *pwd,  size_t pwdlen,
-                             const unsigned char *data, size_t len,
-                             unsigned char *output )
-{
-#if !defined(MBEDTLS_ARC4_C)
-    ((void) pbe_params);
-    ((void) mode);
-    ((void) pwd);
-    ((void) pwdlen);
-    ((void) data);
-    ((void) len);
-    ((void) output);
-    return( MBEDTLS_ERR_PKCS12_FEATURE_UNAVAILABLE );
-#else
-    int ret;
-    unsigned char key[16];
-    mbedtls_arc4_context ctx;
-    ((void) mode);
-
-    mbedtls_arc4_init( &ctx );
-
-    if( ( ret = pkcs12_pbe_derive_key_iv( pbe_params, MBEDTLS_MD_SHA1,
-                                          pwd, pwdlen,
-                                          key, 16, NULL, 0 ) ) != 0 )
-    {
-        return( ret );
-    }
-
-    mbedtls_arc4_setup( &ctx, key, 16 );
-    if( ( ret = mbedtls_arc4_crypt( &ctx, len, data, output ) ) != 0 )
-        goto exit;
-
-exit:
-    mbedtls_platform_zeroize( key, sizeof( key ) );
-    mbedtls_arc4_free( &ctx );
-
-    return( ret );
-#endif /* MBEDTLS_ARC4_C */
-}
 
 int mbedtls_pkcs12_pbe( mbedtls_asn1_buf *pbe_params, int mode,
                 mbedtls_cipher_type_t cipher_type, mbedtls_md_type_t md_type,
@@ -289,7 +214,7 @@ int mbedtls_pkcs12_derivation( unsigned char *data, size_t datalen,
                        const unsigned char *salt, size_t saltlen,
                        mbedtls_md_type_t md_type, int id, int iterations )
 {
-    int ret;
+    int ret = MBEDTLS_ERR_ERROR_CORRUPTION_DETECTED;
     unsigned int j;
 
     unsigned char diversifier[128];
@@ -400,8 +325,8 @@ int mbedtls_pkcs12_derivation( unsigned char *data, size_t datalen,
             for( i = v; i > 0; i-- )
             {
                 j = salt_block[i - 1] + hash_block[i - 1] + c;
-            c = (unsigned char) (j >> 8);
-            salt_block[i - 1] = j & 0xFF;
+                c = MBEDTLS_BYTE_1( j );
+                salt_block[i - 1] = MBEDTLS_BYTE_0( j );
             }
         }
 
@@ -412,8 +337,8 @@ int mbedtls_pkcs12_derivation( unsigned char *data, size_t datalen,
             for( i = v; i > 0; i-- )
             {
                 j = pwd_block[i - 1] + hash_block[i - 1] + c;
-            c = (unsigned char) (j >> 8);
-            pwd_block[i - 1] = j & 0xFF;
+                c = MBEDTLS_BYTE_1( j );
+                pwd_block[i - 1] = MBEDTLS_BYTE_0( j );
             }
         }
     }
