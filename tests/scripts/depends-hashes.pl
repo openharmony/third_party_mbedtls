@@ -3,13 +3,7 @@
 # depends-hashes.pl
 #
 # Copyright The Mbed TLS Contributors
-# SPDX-License-Identifier: Apache-2.0 OR GPL-2.0-or-later
-#
-# This file is provided under the Apache License 2.0, or the
-# GNU General Public License v2.0 or later.
-#
-# **********
-# Apache License 2.0:
+# SPDX-License-Identifier: Apache-2.0
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License.
@@ -22,27 +16,6 @@
 # WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#
-# **********
-#
-# **********
-# GNU General Public License v2.0 or later:
-#
-# This program is free software; you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; either version 2 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License along
-# with this program; if not, write to the Free Software Foundation, Inc.,
-# 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
-#
-# **********
 #
 # Purpose
 #
@@ -69,7 +42,7 @@ use strict;
 
 -d 'library' && -d 'include' && -d 'tests' or die "Must be run from root\n";
 
-my $config_h = 'include/mbedtls/config.h';
+my $config_h = 'include/mbedtls/mbedtls_config.h';
 
 # as many SSL options depend on specific hashes,
 # and SSL is not in the test suites anyways,
@@ -77,11 +50,17 @@ my $config_h = 'include/mbedtls/config.h';
 my $ssl_sed_cmd = 's/^#define \(MBEDTLS_SSL.*\)/\1/p';
 my @ssl = split( /\s+/, `sed -n -e '$ssl_sed_cmd' $config_h` );
 
-# for md we want to catch MD5_C but not MD_C, hence the extra dot
-my $mdx_sed_cmd = 's/^#define \(MBEDTLS_MD..*_C\)/\1/p';
-my $sha_sed_cmd = 's/^#define \(MBEDTLS_SHA.*_C\)/\1/p';
-my @hashes = split( /\s+/,
-                    `sed -n -e '$mdx_sed_cmd' -e '$sha_sed_cmd' $config_h` );
+# Each element of this array holds list of configuration options that
+# should be tested together. Certain options depend on eachother and
+# separating them would generate invalid configurations.
+my @hash_configs = (
+    ['unset MBEDTLS_MD5_C'],
+    ['unset MBEDTLS_SHA512_C', 'unset MBEDTLS_SHA384_C '],
+    ['unset MBEDTLS_SHA384_C'],
+    ['unset MBEDTLS_SHA256_C', 'unset MBEDTLS_SHA224_C'],
+    ['unset MBEDTLS_SHA1_C'],
+);
+
 system( "cp $config_h $config_h.bak" ) and die;
 sub abort {
     system( "mv $config_h.bak $config_h" ) and warn "$config_h not restored\n";
@@ -90,26 +69,31 @@ sub abort {
     exit 1;
 }
 
-for my $hash (@hashes) {
+for my $hash_config (@hash_configs) {
     system( "cp $config_h.bak $config_h" ) and die "$config_h not restored\n";
     system( "make clean" ) and die;
 
-    print "\n******************************************\n";
-    print "* Testing without hash: $hash\n";
-    print "******************************************\n";
+    my $hash_config_string = join(', ', @$hash_config);
 
-    system( "scripts/config.pl unset $hash" )
-        and abort "Failed to disable $hash\n";
+    print "\n******************************************\n";
+    print "* Testing hash options: $hash_config_string\n";
+    print "******************************************\n";
+    $ENV{MBEDTLS_TEST_CONFIGURATION} = "-$hash_config_string";
+
+    for my $hash (@$hash_config) {
+        system( "scripts/config.py $hash" )
+            and abort "Failed to $hash\n";
+    }
 
     for my $opt (@ssl) {
-        system( "scripts/config.pl unset $opt" )
+        system( "scripts/config.py unset $opt" )
             and abort "Failed to disable $opt\n";
     }
 
     system( "CFLAGS='-Werror -Wall -Wextra' make lib" )
-        and abort "Failed to build lib: $hash\n";
-    system( "cd tests && make" ) and abort "Failed to build tests: $hash\n";
-    system( "make test" ) and abort "Failed test suite: $hash\n";
+        and abort "Failed to build lib: $hash_config_string\n";
+    system( "cd tests && make" ) and abort "Failed to build tests: $hash_config_string\n";
+    system( "make test" ) and abort "Failed test suite: $hash_config_string\n";
 }
 
 system( "mv $config_h.bak $config_h" ) and die "$config_h not restored\n";

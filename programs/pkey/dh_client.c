@@ -2,13 +2,7 @@
  *  Diffie-Hellman-Merkle key exchange (client side)
  *
  *  Copyright The Mbed TLS Contributors
- *  SPDX-License-Identifier: Apache-2.0 OR GPL-2.0-or-later
- *
- *  This file is provided under the Apache License 2.0, or the
- *  GNU General Public License v2.0 or later.
- *
- *  **********
- *  Apache License 2.0:
+ *  SPDX-License-Identifier: Apache-2.0
  *
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may
  *  not use this file except in compliance with the License.
@@ -21,34 +15,9 @@
  *  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
- *
- *  **********
- *
- *  **********
- *  GNU General Public License v2.0 or later:
- *
- *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2 of the License, or
- *  (at your option) any later version.
- *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License along
- *  with this program; if not, write to the Free Software Foundation, Inc.,
- *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- *  **********
  */
 
-#if !defined(MBEDTLS_CONFIG_FILE)
-#include "mbedtls/config.h"
-#else
-#include MBEDTLS_CONFIG_FILE
-#endif
+#include "mbedtls/build_info.h"
 
 #if defined(MBEDTLS_PLATFORM_C)
 #include "mbedtls/platform.h"
@@ -119,7 +88,6 @@ int main( void )
     mbedtls_aes_context aes;
 
     mbedtls_net_init( &server_fd );
-    mbedtls_rsa_init( &rsa, MBEDTLS_RSA_PKCS_V15, MBEDTLS_MD_SHA256 );
     mbedtls_dhm_init( &dhm );
     mbedtls_aes_init( &aes );
     mbedtls_ctr_drbg_init( &ctr_drbg );
@@ -152,17 +120,17 @@ int main( void )
         goto exit;
     }
 
-    mbedtls_rsa_init( &rsa, MBEDTLS_RSA_PKCS_V15, 0 );
+    mbedtls_rsa_init( &rsa );
 
-    if( ( ret = mbedtls_mpi_read_file( &rsa.N, 16, f ) ) != 0 ||
-        ( ret = mbedtls_mpi_read_file( &rsa.E, 16, f ) ) != 0 )
+    if( ( ret = mbedtls_mpi_read_file( &rsa.MBEDTLS_PRIVATE(N), 16, f ) ) != 0 ||
+        ( ret = mbedtls_mpi_read_file( &rsa.MBEDTLS_PRIVATE(E), 16, f ) ) != 0 )
     {
         mbedtls_printf( " failed\n  ! mbedtls_mpi_read_file returned %d\n\n", ret );
         fclose( f );
         goto exit;
     }
 
-    rsa.len = ( mbedtls_mpi_bitlen( &rsa.N ) + 7 ) >> 3;
+    rsa.MBEDTLS_PRIVATE(len) = ( mbedtls_mpi_bitlen( &rsa.MBEDTLS_PRIVATE(N) ) + 7 ) >> 3;
 
     fclose( f );
 
@@ -220,7 +188,8 @@ int main( void )
         goto exit;
     }
 
-    if( dhm.len < 64 || dhm.len > 512 )
+    n = mbedtls_dhm_get_len( &dhm );
+    if( n < 64 || n > 512 )
     {
         mbedtls_printf( " failed\n  ! Invalid DHM modulus size\n\n" );
         goto exit;
@@ -235,20 +204,20 @@ int main( void )
 
     p += 2;
 
-    if( ( n = (size_t) ( end - p ) ) != rsa.len )
+    if( ( n = (size_t) ( end - p ) ) != rsa.MBEDTLS_PRIVATE(len) )
     {
         mbedtls_printf( " failed\n  ! Invalid RSA signature size\n\n" );
         goto exit;
     }
 
-    if( ( ret = mbedtls_sha1_ret( buf, (int)( p - 2 - buf ), hash ) ) != 0 )
+    if( ( ret = mbedtls_sha1( buf, (int)( p - 2 - buf ), hash ) ) != 0 )
     {
-        mbedtls_printf( " failed\n  ! mbedtls_sha1_ret returned %d\n\n", ret );
+        mbedtls_printf( " failed\n  ! mbedtls_sha1 returned %d\n\n", ret );
         goto exit;
     }
 
-    if( ( ret = mbedtls_rsa_pkcs1_verify( &rsa, NULL, NULL, MBEDTLS_RSA_PUBLIC,
-                                  MBEDTLS_MD_SHA256, 0, hash, p ) ) != 0 )
+    if( ( ret = mbedtls_rsa_pkcs1_verify( &rsa, MBEDTLS_MD_SHA256,
+                                          32, hash, p ) ) != 0 )
     {
         mbedtls_printf( " failed\n  ! mbedtls_rsa_pkcs1_verify returned %d\n\n", ret );
         goto exit;
@@ -260,8 +229,8 @@ int main( void )
     mbedtls_printf( "\n  . Sending own public value to server" );
     fflush( stdout );
 
-    n = dhm.len;
-    if( ( ret = mbedtls_dhm_make_public( &dhm, (int) dhm.len, buf, n,
+    n = mbedtls_dhm_get_len( &dhm );
+    if( ( ret = mbedtls_dhm_make_public( &dhm, (int) n, buf, n,
                                  mbedtls_ctr_drbg_random, &ctr_drbg ) ) != 0 )
     {
         mbedtls_printf( " failed\n  ! mbedtls_dhm_make_public returned %d\n\n", ret );
@@ -301,7 +270,9 @@ int main( void )
     mbedtls_printf( "...\n  . Receiving and decrypting the ciphertext" );
     fflush( stdout );
 
-    mbedtls_aes_setkey_dec( &aes, buf, 256 );
+    ret = mbedtls_aes_setkey_dec( &aes, buf, 256 );
+    if( ret != 0 )
+        goto exit;
 
     memset( buf, 0, sizeof( buf ) );
 
@@ -311,7 +282,9 @@ int main( void )
         goto exit;
     }
 
-    mbedtls_aes_crypt_ecb( &aes, MBEDTLS_AES_DECRYPT, buf, buf );
+    ret = mbedtls_aes_crypt_ecb( &aes, MBEDTLS_AES_DECRYPT, buf, buf );
+    if( ret != 0 )
+        goto exit;
     buf[16] = '\0';
     mbedtls_printf( "\n  . Plaintext is \"%s\"\n\n", (char *) buf );
 

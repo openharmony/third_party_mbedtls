@@ -1,13 +1,7 @@
 #!/bin/bash
 #
 # Copyright The Mbed TLS Contributors
-# SPDX-License-Identifier: Apache-2.0 OR GPL-2.0-or-later
-#
-# This file is provided under the Apache License 2.0, or the
-# GNU General Public License v2.0 or later.
-#
-# **********
-# Apache License 2.0:
+# SPDX-License-Identifier: Apache-2.0
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License.
@@ -21,27 +15,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-# **********
-#
-# **********
-# GNU General Public License v2.0 or later:
-#
-# This program is free software; you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; either version 2 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License along
-# with this program; if not, write to the Free Software Foundation, Inc.,
-# 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
-#
-# **********
-#
 # Purpose
 #
 # Sets the version numbers in the source code to those given.
@@ -50,6 +23,8 @@
 #                           [ --so-x509 <version> ] [ --so-tls <version> ]
 #                           [ -v | --verbose ] [ -h | --help ]
 #
+
+set -e
 
 VERSION=""
 SOVERSION=""
@@ -106,6 +81,10 @@ then
   exit 1
 fi
 
+[ $VERBOSE ] && echo "Bumping VERSION in CMakeLists.txt"
+sed -e "s/ VERSION [0-9.]\{1,\}/ VERSION $VERSION/g" < CMakeLists.txt > tmp
+mv tmp CMakeLists.txt
+
 [ $VERBOSE ] && echo "Bumping VERSION in library/CMakeLists.txt"
 sed -e "s/ VERSION [0-9.]\{1,\}/ VERSION $VERSION/g" < library/CMakeLists.txt > tmp
 mv tmp library/CMakeLists.txt
@@ -143,10 +122,10 @@ then
   mv tmp library/Makefile
 fi
 
-[ $VERBOSE ] && echo "Bumping VERSION in include/mbedtls/version.h"
+[ $VERBOSE ] && echo "Bumping VERSION in include/mbedtls/build_info.h"
 read MAJOR MINOR PATCH <<<$(IFS="."; echo $VERSION)
 VERSION_NR="$( printf "0x%02X%02X%02X00" $MAJOR $MINOR $PATCH )"
-cat include/mbedtls/version.h |                                    \
+cat include/mbedtls/build_info.h |                                    \
     sed -e "s/_VERSION_MAJOR .\{1,\}/_VERSION_MAJOR  $MAJOR/" |    \
     sed -e "s/_VERSION_MINOR .\{1,\}/_VERSION_MINOR  $MINOR/" |    \
     sed -e "s/_VERSION_PATCH .\{1,\}/_VERSION_PATCH  $PATCH/" |    \
@@ -154,7 +133,7 @@ cat include/mbedtls/version.h |                                    \
     sed -e "s/_VERSION_STRING .\{1,\}/_VERSION_STRING         \"$VERSION\"/" |    \
     sed -e "s/_VERSION_STRING_FULL .\{1,\}/_VERSION_STRING_FULL    \"mbed TLS $VERSION\"/" \
     > tmp
-mv tmp include/mbedtls/version.h
+mv tmp include/mbedtls/build_info.h
 
 [ $VERBOSE ] && echo "Bumping version in tests/suites/test_suite_version.data"
 sed -e "s/version:\".\{1,\}/version:\"$VERSION\"/g" < tests/suites/test_suite_version.data > tmp
@@ -170,7 +149,7 @@ done
 [ $VERBOSE ] && echo "Re-generating library/error.c"
 scripts/generate_errors.pl
 
-[ $VERBOSE ] && echo "Re-generating programs/ssl/query_config.c"
+[ $VERBOSE ] && echo "Re-generating programs/test/query_config.c"
 scripts/generate_query_config.pl
 
 [ $VERBOSE ] && echo "Re-generating library/version_features.c"
