@@ -1405,6 +1405,7 @@ psa_status_t psa_export_public_key( mbedtls_svc_key_id_t key,
     psa_status_t status = PSA_ERROR_CORRUPTION_DETECTED;
     psa_status_t unlock_status = PSA_ERROR_CORRUPTION_DETECTED;
     psa_key_slot_t *slot;
+    psa_key_attributes_t attributes;
 
     /* Reject a zero-length output buffer now, since this can never be a
      * valid key representation. This way we know that data must be a valid
@@ -1429,7 +1430,7 @@ psa_status_t psa_export_public_key( mbedtls_svc_key_id_t key,
          goto exit;
     }
 
-    psa_key_attributes_t attributes = {
+    attributes = {
         .core = slot->attr
     };
     status = psa_driver_wrapper_export_public_key(
@@ -2343,6 +2344,7 @@ static psa_status_t psa_mac_setup( psa_mac_operation_t *operation,
     psa_status_t status = PSA_ERROR_CORRUPTION_DETECTED;
     psa_status_t unlock_status = PSA_ERROR_CORRUPTION_DETECTED;
     psa_key_slot_t *slot = NULL;
+    psa_key_attributes_t attributes;
 
     /* A context must be freshly initialized before it can be set up. */
     if( operation->id != 0 )
@@ -2359,7 +2361,7 @@ static psa_status_t psa_mac_setup( psa_mac_operation_t *operation,
     if( status != PSA_SUCCESS )
         goto exit;
 
-    psa_key_attributes_t attributes = {
+    attributes = {
         .core = slot->attr
     };
 
@@ -2537,6 +2539,7 @@ static psa_status_t psa_mac_compute_internal( mbedtls_svc_key_id_t key,
     psa_status_t unlock_status = PSA_ERROR_CORRUPTION_DETECTED;
     psa_key_slot_t *slot;
     uint8_t operation_mac_size = 0;
+    psa_key_attributes_t attributes;
 
     status = psa_get_and_lock_key_slot_with_policy(
                  key,
@@ -2546,7 +2549,7 @@ static psa_status_t psa_mac_compute_internal( mbedtls_svc_key_id_t key,
     if( status != PSA_SUCCESS )
         goto exit;
 
-    psa_key_attributes_t attributes = {
+    attributes = {
         .core = slot->attr
     };
 
@@ -2675,6 +2678,7 @@ static psa_status_t psa_sign_internal( mbedtls_svc_key_id_t key,
     psa_status_t status = PSA_ERROR_CORRUPTION_DETECTED;
     psa_status_t unlock_status = PSA_ERROR_CORRUPTION_DETECTED;
     psa_key_slot_t *slot;
+    psa_key_attributes_t attributes;
 
     *signature_length = 0;
 
@@ -2704,7 +2708,7 @@ static psa_status_t psa_sign_internal( mbedtls_svc_key_id_t key,
         goto exit;
     }
 
-    psa_key_attributes_t attributes = {
+    attributes = {
       .core = slot->attr
     };
 
@@ -3286,6 +3290,7 @@ static psa_status_t psa_cipher_setup( psa_cipher_operation_t *operation,
     psa_key_usage_t usage = ( cipher_operation == MBEDTLS_ENCRYPT ?
                               PSA_KEY_USAGE_ENCRYPT :
                               PSA_KEY_USAGE_DECRYPT );
+    psa_key_attributes_t attributes;
 
     /* A context must be freshly initialized before it can be set up. */
     if( operation->id != 0 )
@@ -3315,7 +3320,7 @@ static psa_status_t psa_cipher_setup( psa_cipher_operation_t *operation,
         operation->iv_required = 1;
     operation->default_iv_length = PSA_CIPHER_IV_LENGTH( slot->attr.type, alg );
 
-    psa_key_attributes_t attributes = {
+    attributes = {
       .core = slot->attr
     };
 
@@ -3552,6 +3557,7 @@ psa_status_t psa_cipher_encrypt( mbedtls_svc_key_id_t key,
     psa_key_slot_t *slot = NULL;
     uint8_t local_iv[PSA_CIPHER_IV_MAX_SIZE];
     size_t default_iv_length = 0;
+    psa_key_attributes_t attributes;
 
     if( ! PSA_ALG_IS_CIPHER( alg ) )
     {
@@ -3565,7 +3571,7 @@ psa_status_t psa_cipher_encrypt( mbedtls_svc_key_id_t key,
     if( status != PSA_SUCCESS )
         goto exit;
 
-    psa_key_attributes_t attributes = {
+    attributes = {
       .core = slot->attr
     };
 
@@ -3623,6 +3629,7 @@ psa_status_t psa_cipher_decrypt( mbedtls_svc_key_id_t key,
     psa_status_t status = PSA_ERROR_CORRUPTION_DETECTED;
     psa_status_t unlock_status = PSA_ERROR_CORRUPTION_DETECTED;
     psa_key_slot_t *slot = NULL;
+    psa_key_attributes_t attributes;
 
     if( ! PSA_ALG_IS_CIPHER( alg ) )
     {
@@ -3636,7 +3643,7 @@ psa_status_t psa_cipher_decrypt( mbedtls_svc_key_id_t key,
     if( status != PSA_SUCCESS )
         goto exit;
 
-    psa_key_attributes_t attributes = {
+    attributes = {
       .core = slot->attr
     };
 
@@ -3829,6 +3836,7 @@ static psa_status_t psa_aead_setup( psa_aead_operation_t *operation,
     psa_status_t unlock_status = PSA_ERROR_CORRUPTION_DETECTED;
     psa_key_slot_t *slot = NULL;
     psa_key_usage_t key_usage = 0;
+    psa_key_attributes_t attributes;
 
     if( !PSA_ALG_IS_AEAD( alg ) || PSA_ALG_IS_WILDCARD( alg ) )
     {
@@ -3859,7 +3867,7 @@ static psa_status_t psa_aead_setup( psa_aead_operation_t *operation,
     if( status != PSA_SUCCESS )
         goto exit;
 
-    psa_key_attributes_t attributes = {
+    attributes = {
         .core = slot->attr
     };
 
@@ -4781,6 +4789,7 @@ static psa_status_t psa_generate_derived_key_internal(
     size_t bytes = PSA_BITS_TO_BYTES( bits );
     size_t storage_size = bytes;
     psa_status_t status;
+    psa_key_attributes_t attributes;
 
     if( ! key_type_is_raw_bytes( slot->attr.type ) )
         return( PSA_ERROR_INVALID_ARGUMENT );
@@ -4799,7 +4808,7 @@ static psa_status_t psa_generate_derived_key_internal(
 #endif /* MBEDTLS_PSA_BUILTIN_KEY_TYPE_DES */
 
     slot->attr.bits = (psa_key_bits_t) bits;
-    psa_key_attributes_t attributes = {
+    attributes = {
       .core = slot->attr
     };
 
@@ -5372,14 +5381,16 @@ static psa_status_t psa_key_agreement_raw_internal( psa_algorithm_t alg,
                                                     size_t shared_secret_size,
                                                     size_t *shared_secret_length )
 {
+    mbedtls_ecp_keypair *ecp;
+    psa_status_t status;
     switch( alg )
     {
 #if defined(MBEDTLS_PSA_BUILTIN_ALG_ECDH)
         case PSA_ALG_ECDH:
             if( ! PSA_KEY_TYPE_IS_ECC_KEY_PAIR( private_key->attr.type ) )
                 return( PSA_ERROR_INVALID_ARGUMENT );
-            mbedtls_ecp_keypair *ecp = NULL;
-            psa_status_t status = mbedtls_psa_ecp_load_representation(
+            ecp = NULL;
+            status = mbedtls_psa_ecp_load_representation(
                                       private_key->attr.type,
                                       private_key->attr.bits,
                                       private_key->key.data,
