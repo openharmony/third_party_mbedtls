@@ -1430,9 +1430,7 @@ psa_status_t psa_export_public_key( mbedtls_svc_key_id_t key,
          goto exit;
     }
 
-    attributes = {
-        .core = slot->attr
-    };
+    attributes.core = slot->attr;
     status = psa_driver_wrapper_export_public_key(
         &attributes, slot->key.data, slot->key.bytes,
         data, data_size, data_length );
@@ -2361,10 +2359,7 @@ static psa_status_t psa_mac_setup( psa_mac_operation_t *operation,
     if( status != PSA_SUCCESS )
         goto exit;
 
-    attributes = {
-        .core = slot->attr
-    };
-
+    attributes.core = slot->attr;
     status = psa_mac_finalize_alg_and_key_validation( alg, &attributes,
                                                       &operation->mac_size );
     if( status != PSA_SUCCESS )
@@ -2549,9 +2544,7 @@ static psa_status_t psa_mac_compute_internal( mbedtls_svc_key_id_t key,
     if( status != PSA_SUCCESS )
         goto exit;
 
-    attributes = {
-        .core = slot->attr
-    };
+    attributes.core = slot->attr;
 
     status = psa_mac_finalize_alg_and_key_validation( alg, &attributes,
                                                       &operation_mac_size );
@@ -2708,9 +2701,7 @@ static psa_status_t psa_sign_internal( mbedtls_svc_key_id_t key,
         goto exit;
     }
 
-    attributes = {
-      .core = slot->attr
-    };
+    attributes.core = slot->attr;
 
     if( input_is_message )
     {
@@ -3320,9 +3311,7 @@ static psa_status_t psa_cipher_setup( psa_cipher_operation_t *operation,
         operation->iv_required = 1;
     operation->default_iv_length = PSA_CIPHER_IV_LENGTH( slot->attr.type, alg );
 
-    attributes = {
-      .core = slot->attr
-    };
+    attributes.core = slot->attr;
 
     /* Try doing the operation through a driver before using software fallback. */
     if( cipher_operation == MBEDTLS_ENCRYPT )
@@ -3571,9 +3560,7 @@ psa_status_t psa_cipher_encrypt( mbedtls_svc_key_id_t key,
     if( status != PSA_SUCCESS )
         goto exit;
 
-    attributes = {
-      .core = slot->attr
-    };
+    attributes.core = slot->attr;
 
     default_iv_length = PSA_CIPHER_IV_LENGTH( slot->attr.type, alg );
     if( default_iv_length > PSA_CIPHER_IV_MAX_SIZE )
@@ -3643,9 +3630,7 @@ psa_status_t psa_cipher_decrypt( mbedtls_svc_key_id_t key,
     if( status != PSA_SUCCESS )
         goto exit;
 
-    attributes = {
-      .core = slot->attr
-    };
+    attributes.core = slot->attr;
 
     if( alg == PSA_ALG_CCM_STAR_NO_TAG && input_length < PSA_BLOCK_CIPHER_BLOCK_LENGTH( slot->attr.type ) )
     {
@@ -3867,9 +3852,7 @@ static psa_status_t psa_aead_setup( psa_aead_operation_t *operation,
     if( status != PSA_SUCCESS )
         goto exit;
 
-    attributes = {
-        .core = slot->attr
-    };
+    attributes.core = slot->attr;
 
     if( is_encrypt )
         status = psa_driver_wrapper_aead_encrypt_setup( operation,
@@ -4808,9 +4791,7 @@ static psa_status_t psa_generate_derived_key_internal(
 #endif /* MBEDTLS_PSA_BUILTIN_KEY_TYPE_DES */
 
     slot->attr.bits = (psa_key_bits_t) bits;
-    attributes = {
-      .core = slot->attr
-    };
+    attributes.core = slot->attr;
 
     if( psa_key_lifetime_is_external( attributes.core.lifetime ) )
     {
