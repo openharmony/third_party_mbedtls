@@ -2,13 +2,7 @@
  *  RSA simple decryption program
  *
  *  Copyright The Mbed TLS Contributors
- *  SPDX-License-Identifier: Apache-2.0 OR GPL-2.0-or-later
- *
- *  This file is provided under the Apache License 2.0, or the
- *  GNU General Public License v2.0 or later.
- *
- *  **********
- *  Apache License 2.0:
+ *  SPDX-License-Identifier: Apache-2.0
  *
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may
  *  not use this file except in compliance with the License.
@@ -21,34 +15,9 @@
  *  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
- *
- *  **********
- *
- *  **********
- *  GNU General Public License v2.0 or later:
- *
- *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2 of the License, or
- *  (at your option) any later version.
- *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License along
- *  with this program; if not, write to the Free Software Foundation, Inc.,
- *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- *  **********
  */
 
-#if !defined(MBEDTLS_CONFIG_FILE)
-#include "mbedtls/config.h"
-#else
-#include MBEDTLS_CONFIG_FILE
-#endif
+#include "mbedtls/build_info.h"
 
 #if defined(MBEDTLS_PLATFORM_C)
 #include "mbedtls/platform.h"
@@ -117,7 +86,7 @@ int main( int argc, char *argv[] )
     mbedtls_printf( "\n  . Seeding the random number generator..." );
     fflush( stdout );
 
-    mbedtls_rsa_init( &rsa, MBEDTLS_RSA_PKCS_V15, 0 );
+    mbedtls_rsa_init( &rsa );
     mbedtls_ctr_drbg_init( &ctr_drbg );
     mbedtls_entropy_init( &entropy );
     mbedtls_mpi_init( &N ); mbedtls_mpi_init( &P ); mbedtls_mpi_init( &Q );
@@ -185,13 +154,13 @@ int main( int argc, char *argv[] )
 
     i = 0;
 
-    while( fscanf( f, "%02X", &c ) > 0 &&
+    while( fscanf( f, "%02X", (unsigned int*) &c ) > 0 &&
            i < (int) sizeof( buf ) )
         buf[i++] = (unsigned char) c;
 
     fclose( f );
 
-    if( i != rsa.len )
+    if( i != rsa.MBEDTLS_PRIVATE(len) )
     {
         mbedtls_printf( "\n  ! Invalid RSA signature format\n\n" );
         goto exit;
@@ -204,7 +173,7 @@ int main( int argc, char *argv[] )
     fflush( stdout );
 
     ret = mbedtls_rsa_pkcs1_decrypt( &rsa, mbedtls_ctr_drbg_random,
-                                            &ctr_drbg, MBEDTLS_RSA_PRIVATE, &i,
+                                            &ctr_drbg, &i,
                                             buf, result, 1024 );
     if( ret != 0 )
     {

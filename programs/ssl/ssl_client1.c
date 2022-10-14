@@ -2,13 +2,7 @@
  *  SSL client demonstration program
  *
  *  Copyright The Mbed TLS Contributors
- *  SPDX-License-Identifier: Apache-2.0 OR GPL-2.0-or-later
- *
- *  This file is provided under the Apache License 2.0, or the
- *  GNU General Public License v2.0 or later.
- *
- *  **********
- *  Apache License 2.0:
+ *  SPDX-License-Identifier: Apache-2.0
  *
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may
  *  not use this file except in compliance with the License.
@@ -21,34 +15,9 @@
  *  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
- *
- *  **********
- *
- *  **********
- *  GNU General Public License v2.0 or later:
- *
- *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2 of the License, or
- *  (at your option) any later version.
- *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License along
- *  with this program; if not, write to the Free Software Foundation, Inc.,
- *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- *  **********
  */
 
-#if !defined(MBEDTLS_CONFIG_FILE)
-#include "mbedtls/config.h"
-#else
-#include MBEDTLS_CONFIG_FILE
-#endif
+#include "mbedtls/build_info.h"
 
 #if defined(MBEDTLS_PLATFORM_C)
 #include "mbedtls/platform.h"
@@ -64,11 +33,11 @@
 #define MBEDTLS_EXIT_FAILURE    EXIT_FAILURE
 #endif /* MBEDTLS_PLATFORM_C */
 
-#if !defined(MBEDTLS_BIGNUM_C) || !defined(MBEDTLS_ENTROPY_C) ||  \
-    !defined(MBEDTLS_SSL_TLS_C) || !defined(MBEDTLS_SSL_CLI_C) || \
-    !defined(MBEDTLS_NET_C) || !defined(MBEDTLS_RSA_C) ||         \
-    !defined(MBEDTLS_CERTS_C) || !defined(MBEDTLS_PEM_PARSE_C) || \
-    !defined(MBEDTLS_CTR_DRBG_C) || !defined(MBEDTLS_X509_CRT_PARSE_C)
+#if !defined(MBEDTLS_BIGNUM_C) || !defined(MBEDTLS_ENTROPY_C) ||     \
+    !defined(MBEDTLS_SSL_TLS_C) || !defined(MBEDTLS_SSL_CLI_C) ||    \
+    !defined(MBEDTLS_NET_C) || !defined(MBEDTLS_RSA_C) ||            \
+    !defined(MBEDTLS_PEM_PARSE_C) || !defined(MBEDTLS_CTR_DRBG_C) || \
+    !defined(MBEDTLS_X509_CRT_PARSE_C)
 int main( void )
 {
     mbedtls_printf("MBEDTLS_BIGNUM_C and/or MBEDTLS_ENTROPY_C and/or "
@@ -86,7 +55,7 @@ int main( void )
 #include "mbedtls/entropy.h"
 #include "mbedtls/ctr_drbg.h"
 #include "mbedtls/error.h"
-#include "mbedtls/certs.h"
+#include "test/certs.h"
 
 #include <string.h>
 
@@ -159,7 +128,7 @@ int main( void )
                           mbedtls_test_cas_pem_len );
     if( ret < 0 )
     {
-        mbedtls_printf( " failed\n  !  mbedtls_x509_crt_parse returned -0x%x\n\n", -ret );
+        mbedtls_printf( " failed\n  !  mbedtls_x509_crt_parse returned -0x%x\n\n", (unsigned int) -ret );
         goto exit;
     }
 
@@ -228,7 +197,7 @@ int main( void )
     {
         if( ret != MBEDTLS_ERR_SSL_WANT_READ && ret != MBEDTLS_ERR_SSL_WANT_WRITE )
         {
-            mbedtls_printf( " failed\n  ! mbedtls_ssl_handshake returned -0x%x\n\n", -ret );
+            mbedtls_printf( " failed\n  ! mbedtls_ssl_handshake returned -0x%x\n\n", (unsigned int) -ret );
             goto exit;
         }
     }
@@ -243,13 +212,17 @@ int main( void )
     /* In real life, we probably want to bail out when ret != 0 */
     if( ( flags = mbedtls_ssl_get_verify_result( &ssl ) ) != 0 )
     {
+#if !defined(MBEDTLS_X509_REMOVE_INFO)
         char vrfy_buf[512];
+#endif
 
         mbedtls_printf( " failed\n" );
 
+#if !defined(MBEDTLS_X509_REMOVE_INFO)
         mbedtls_x509_crt_verify_info( vrfy_buf, sizeof( vrfy_buf ), "  ! ", flags );
 
         mbedtls_printf( "%s\n", vrfy_buf );
+#endif
     }
     else
         mbedtls_printf( " ok\n" );
@@ -341,5 +314,4 @@ exit:
 }
 #endif /* MBEDTLS_BIGNUM_C && MBEDTLS_ENTROPY_C && MBEDTLS_SSL_TLS_C &&
           MBEDTLS_SSL_CLI_C && MBEDTLS_NET_C && MBEDTLS_RSA_C &&
-          MBEDTLS_CERTS_C && MBEDTLS_PEM_PARSE_C && MBEDTLS_CTR_DRBG_C &&
-          MBEDTLS_X509_CRT_PARSE_C */
+          MBEDTLS_PEM_PARSE_C && MBEDTLS_CTR_DRBG_C && MBEDTLS_X509_CRT_PARSE_C */

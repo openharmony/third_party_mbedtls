@@ -15,6 +15,18 @@
 
 import("//third_party/mbedtls/mbedtls.gni")
 
+MBEDTLS_SOURCES += [
+  "library/debug.c",
+  "library/ssl_cache.c",
+  "library/ssl_cookie.c",
+  "library/ssl_srv.c",
+  "library/ssl_ticket.c",
+  "library/x509_create.c",
+  "library/x509_csr.c",
+  "library/x509write_crt.c",
+  "library/x509write_csr.c",
+]
+
 if (defined(ohos_lite)) {
   import("//build/lite/config/component/lite_component.gni")
   import("//build/lite/ndk/ndk.gni")
@@ -88,19 +100,6 @@ if (defined(ohos_lite)) {
         "-w",
       ]
     }
-
-    MBEDTLS_SOURCES += [
-      "library/debug.c",
-      "library/pkcs11.c",
-      "library/ssl_cache.c",
-      "library/ssl_cookie.c",
-      "library/ssl_srv.c",
-      "library/ssl_ticket.c",
-      "library/x509_create.c",
-      "library/x509_csr.c",
-      "library/x509write_crt.c",
-      "library/x509write_csr.c",
-    ]
 
     static_library("mbedtls_gt") {
       sources = MBEDTLS_SOURCES

@@ -2,13 +2,7 @@
  *  HMAC_DRBG implementation (NIST SP 800-90)
  *
  *  Copyright The Mbed TLS Contributors
- *  SPDX-License-Identifier: Apache-2.0 OR GPL-2.0-or-later
- *
- *  This file is provided under the Apache License 2.0, or the
- *  GNU General Public License v2.0 or later.
- *
- *  **********
- *  Apache License 2.0:
+ *  SPDX-License-Identifier: Apache-2.0
  *
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may
  *  not use this file except in compliance with the License.
@@ -21,27 +15,6 @@
  *  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
- *
- *  **********
- *
- *  **********
- *  GNU General Public License v2.0 or later:
- *
- *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2 of the License, or
- *  (at your option) any later version.
- *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License along
- *  with this program; if not, write to the Free Software Foundation, Inc.,
- *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- *  **********
  */
 
 /*
@@ -50,16 +23,13 @@
  *  References below are based on rev. 1 (January 2012).
  */
 
-#if !defined(MBEDTLS_CONFIG_FILE)
-#include "mbedtls/config.h"
-#else
-#include MBEDTLS_CONFIG_FILE
-#endif
+#include "common.h"
 
 #if defined(MBEDTLS_HMAC_DRBG_C)
 
 #include "mbedtls/hmac_drbg.h"
 #include "mbedtls/platform_util.h"
+#include "mbedtls/error.h"
 
 #include <string.h>
 
@@ -89,7 +59,7 @@ void mbedtls_hmac_drbg_init( mbedtls_hmac_drbg_context *ctx )
 /*
  * HMAC_DRBG update, using optional additional data (10.1.2.2)
  */
-int mbedtls_hmac_drbg_update_ret( mbedtls_hmac_drbg_context *ctx,
+int mbedtls_hmac_drbg_update( mbedtls_hmac_drbg_context *ctx,
                                   const unsigned char *additional,
                                   size_t add_len )
 {
@@ -97,7 +67,7 @@ int mbedtls_hmac_drbg_update_ret( mbedtls_hmac_drbg_context *ctx,
     unsigned char rounds = ( additional != NULL && add_len != 0 ) ? 2 : 1;
     unsigned char sep[1];
     unsigned char K[MBEDTLS_MD_MAX_SIZE];
-    int ret;
+    int ret = MBEDTLS_ERR_MD_BAD_INPUT_DATA;
 
     for( sep[0] = 0; sep[0] < rounds; sep[0]++ )
     {
@@ -134,15 +104,6 @@ exit:
     return( ret );
 }
 
-#if !defined(MBEDTLS_DEPRECATED_REMOVED)
-void mbedtls_hmac_drbg_update( mbedtls_hmac_drbg_context *ctx,
-                               const unsigned char *additional,
-                               size_t add_len )
-{
-    (void) mbedtls_hmac_drbg_update_ret( ctx, additional, add_len );
-}
-#endif /* MBEDTLS_DEPRECATED_REMOVED */
-
 /*
  * Simplified HMAC_DRBG initialisation (for use with deterministic ECDSA)
  */
@@ -150,7 +111,7 @@ int mbedtls_hmac_drbg_seed_buf( mbedtls_hmac_drbg_context *ctx,
                         const mbedtls_md_info_t * md_info,
                         const unsigned char *data, size_t data_len )
 {
-    int ret;
+    int ret = MBEDTLS_ERR_ERROR_CORRUPTION_DETECTED;
 
     if( ( ret = mbedtls_md_setup( &ctx->md_ctx, md_info, 1 ) ) != 0 )
         return( ret );
@@ -169,7 +130,7 @@ int mbedtls_hmac_drbg_seed_buf( mbedtls_hmac_drbg_context *ctx,
         return( ret );
     memset( ctx->V, 0x01, mbedtls_md_get_size( md_info ) );
 
-    if( ( ret = mbedtls_hmac_drbg_update_ret( ctx, data, data_len ) ) != 0 )
+    if( ( ret = mbedtls_hmac_drbg_update( ctx, data, data_len ) ) != 0 )
         return( ret );
 
     return( 0 );
@@ -186,7 +147,7 @@ static int hmac_drbg_reseed_core( mbedtls_hmac_drbg_context *ctx,
 {
     unsigned char seed[MBEDTLS_HMAC_DRBG_MAX_SEED_INPUT];
     size_t seedlen = 0;
-    int ret;
+    int ret = MBEDTLS_ERR_ERROR_CORRUPTION_DETECTED;
 
     {
         size_t total_entropy_len;
@@ -244,7 +205,7 @@ static int hmac_drbg_reseed_core( mbedtls_hmac_drbg_context *ctx,
     }
 
     /* 2. Update state */
-    if( ( ret = mbedtls_hmac_drbg_update_ret( ctx, seed, seedlen ) ) != 0 )
+    if( ( ret = mbedtls_hmac_drbg_update( ctx, seed, seedlen ) ) != 0 )
         goto exit;
 
     /* 3. Reset reseed_counter */
@@ -278,7 +239,7 @@ int mbedtls_hmac_drbg_seed( mbedtls_hmac_drbg_context *ctx,
                     const unsigned char *custom,
                     size_t len )
 {
-    int ret;
+    int ret = MBEDTLS_ERR_ERROR_CORRUPTION_DETECTED;
     size_t md_size;
 
     if( ( ret = mbedtls_md_setup( &ctx->md_ctx, md_info, 1 ) ) != 0 )
@@ -359,7 +320,7 @@ int mbedtls_hmac_drbg_random_with_add( void *p_rng,
                                unsigned char *output, size_t out_len,
                                const unsigned char *additional, size_t add_len )
 {
-    int ret;
+    int ret = MBEDTLS_ERR_ERROR_CORRUPTION_DETECTED;
     mbedtls_hmac_drbg_context *ctx = (mbedtls_hmac_drbg_context *) p_rng;
     size_t md_len = mbedtls_md_get_size( ctx->md_ctx.md_info );
     size_t left = out_len;
@@ -387,7 +348,7 @@ int mbedtls_hmac_drbg_random_with_add( void *p_rng,
     /* 2. Use additional data if any */
     if( additional != NULL && add_len != 0 )
     {
-        if( ( ret = mbedtls_hmac_drbg_update_ret( ctx,
+        if( ( ret = mbedtls_hmac_drbg_update( ctx,
                                                   additional, add_len ) ) != 0 )
             goto exit;
     }
@@ -411,7 +372,7 @@ int mbedtls_hmac_drbg_random_with_add( void *p_rng,
     }
 
     /* 6. Update */
-    if( ( ret = mbedtls_hmac_drbg_update_ret( ctx,
+    if( ( ret = mbedtls_hmac_drbg_update( ctx,
                                               additional, add_len ) ) != 0 )
         goto exit;
 
@@ -428,7 +389,7 @@ exit:
  */
 int mbedtls_hmac_drbg_random( void *p_rng, unsigned char *output, size_t out_len )
 {
-    int ret;
+    int ret = MBEDTLS_ERR_ERROR_CORRUPTION_DETECTED;
     mbedtls_hmac_drbg_context *ctx = (mbedtls_hmac_drbg_context *) p_rng;
 
 #if defined(MBEDTLS_THREADING_C)
@@ -468,7 +429,7 @@ void mbedtls_hmac_drbg_free( mbedtls_hmac_drbg_context *ctx )
 #if defined(MBEDTLS_FS_IO)
 int mbedtls_hmac_drbg_write_seed_file( mbedtls_hmac_drbg_context *ctx, const char *path )
 {
-    int ret;
+    int ret = MBEDTLS_ERR_ERROR_CORRUPTION_DETECTED;
     FILE *f;
     unsigned char buf[ MBEDTLS_HMAC_DRBG_MAX_INPUT ];
 
@@ -518,7 +479,7 @@ int mbedtls_hmac_drbg_update_seed_file( mbedtls_hmac_drbg_context *ctx, const ch
     fclose( f );
     f = NULL;
 
-    ret = mbedtls_hmac_drbg_update_ret( ctx, buf, n );
+    ret = mbedtls_hmac_drbg_update( ctx, buf, n );
 
 exit:
     mbedtls_platform_zeroize( buf, sizeof( buf ) );
