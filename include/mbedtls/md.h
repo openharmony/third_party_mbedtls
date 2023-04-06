@@ -54,7 +54,11 @@ extern "C" {
  */
 typedef enum {
     MBEDTLS_MD_NONE=0,    /**< None. */
+#ifdef USE_HISI_MBED
+    MBEDTLS_MD_MD5 = 3,       /**< The MD5 message digest. */
+#else
     MBEDTLS_MD_MD5,       /**< The MD5 message digest. */
+#endif
     MBEDTLS_MD_SHA1,      /**< The SHA-1 message digest. */
     MBEDTLS_MD_SHA224,    /**< The SHA-224 message digest. */
     MBEDTLS_MD_SHA256,    /**< The SHA-256 message digest. */
