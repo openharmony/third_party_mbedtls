@@ -1617,7 +1617,7 @@
  *
  * Comment this macro to disable support for ALPN.
  */
-// #define MBEDTLS_SSL_ALPN
+#define MBEDTLS_SSL_ALPN
 
 /**
  * \def MBEDTLS_SSL_DTLS_ANTI_REPLAY
