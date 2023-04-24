@@ -42,3 +42,5 @@ massif-*
 /TAGS
 /cscope*.out
 /tags
+.idea
+cmake-build-debug
