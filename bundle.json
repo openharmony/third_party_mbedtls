@@ -1,27 +1,14 @@
 {
     "name": "@ohos/mbedtls",
-    "version": "",
-    "description": "Third-party open-source software Mbed TLS | 三方开源软件Mbed TLS",
-    "homePage": "https://gitee.com/openharmony",
+    "description": "An open source, portable, easy to use, readable and flexible SSL library.",
+    "version": "3.1",
     "license": "Apache V2,GPL V2.0",
-    "repository": "https://gitee.com/openharmony/third_party_mbedtls",
-    "domain": "os",
-    "language": "",
     "publishAs": "code-segment",
-    "private": false,
-    "scripts": {},
-    "tags": [
-        "third_party"
-    ],
-    "keywords": [
-        "third-party",
-        "mbedtls"
-    ],
-    "envs": [],
-    "dirs": [],
     "segment": {
         "destPath": "third_party/mbedtls"
     },
+    "dirs": {},
+    "scripts": {},
     "component": {
         "name": "thirdparty_mbedtls",
         "subsystem": "",
@@ -30,6 +17,10 @@
         "adapted_system_type": [],
         "rom": "",
         "ram": "",
+        "deps": {
+            "components": [],
+            "third_party": []
+        },
         "build": {
             "sub_component": [],
             "inner_kits": [],
