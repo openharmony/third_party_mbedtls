@@ -10,8 +10,8 @@
     "dirs": {},
     "scripts": {},
     "component": {
-        "name": "thirdparty_mbedtls",
-        "subsystem": "",
+        "name": "mbedtls",
+        "subsystem": "thirdparty",
         "syscap": [],
         "features": [],
         "adapted_system_type": [],
