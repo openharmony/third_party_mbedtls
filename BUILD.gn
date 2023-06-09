@@ -118,7 +118,7 @@ if (defined(ohos_lite)) {
     output_name = "mbedtls"
     subsystem_name = "common"
     innerapi_tags = [ "platformsdk_indirect" ]
-    part_name = "dsoftbus"
+    part_name = "mbedtls"
     sources = MBEDTLS_SOURCES
     install_images = [
       "system",
