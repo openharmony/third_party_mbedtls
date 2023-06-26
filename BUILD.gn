@@ -116,7 +116,7 @@ if (defined(ohos_lite)) {
   ohos_shared_library("mbedtls_shared") {
     public_configs = [ ":mbedtls_config" ]
     output_name = "mbedtls"
-    subsystem_name = "common"
+    subsystem_name = "thirdparty"
     innerapi_tags = [ "platformsdk_indirect" ]
     part_name = "mbedtls"
     sources = MBEDTLS_SOURCES
