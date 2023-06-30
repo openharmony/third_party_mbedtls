@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2020 Huawei Device Co., Ltd.
+# Copyright (c) 2020-2023 Huawei Device Co., Ltd.
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -116,9 +116,9 @@ if (defined(ohos_lite)) {
   ohos_shared_library("mbedtls_shared") {
     public_configs = [ ":mbedtls_config" ]
     output_name = "mbedtls"
-    subsystem_name = "common"
+    subsystem_name = "thirdparty"
     innerapi_tags = [ "platformsdk_indirect" ]
-    part_name = "dsoftbus"
+    part_name = "mbedtls"
     sources = MBEDTLS_SOURCES
     install_images = [
       "system",
