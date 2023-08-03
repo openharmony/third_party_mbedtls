@@ -14,7 +14,7 @@
         "subsystem": "thirdparty",
         "syscap": [],
         "features": [],
-        "adapted_system_type": [],
+        "adapted_system_type": ["small", "standard"],
         "rom": "",
         "ram": "",
         "deps": {
@@ -23,7 +23,19 @@
         },
         "build": {
             "sub_component": [],
-            "inner_kits": [],
+            "inner_kits": [
+                {
+                    "header" : {
+                        "header_base": "//third_party/mbedtls/include",
+                        "header_files": [
+                            "md.h",
+                            "rsa.h",
+                            "x509.h"
+                        ]
+                    },
+                    "name" : "//third_party/mbedtls:mbedtls_shared"
+                }
+            ],
             "test": []
         }
     }
