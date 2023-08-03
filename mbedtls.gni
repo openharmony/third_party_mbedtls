@@ -129,3 +129,13 @@ MBEDTLS_INLCUDE_DIRS = [
   "$MBEDTLSDIR/include/mbedtls",
   "$MBEDTLSDIR/tests/include",
 ]
+
+if (defined(ohos_lite)) {
+  MBEDTLS_SOURCES += [
+    "$MBEDTLSDIR/library/ssl_srv.c",
+    "$MBEDTLSDIR/port/src/tls_client.c",
+    "$MBEDTLSDIR/port/src/tls_certificate.c",
+  ]
+
+  MBEDTLS_INLCUDE_DIRS += [ "$MBEDTLSDIR/port/include" ]
+}
