@@ -22,6 +22,7 @@ if (ohos_build_type == "debug") {
       "//third_party/mbedtls/include",
       "//commonlibrary/utils_lite/include",
       "//third_party/bounds_checking_function/include",
+      "//third_party/mbedtls/port/include",
     ]
   }
 

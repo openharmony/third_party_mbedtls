@@ -28,8 +28,21 @@ MBEDTLS_SOURCES += [
 ]
 
 if (defined(ohos_lite)) {
+  MBEDTLS_SOURCES -= [ "library/ssl_srv.c" ]
+}
+
+if (defined(ohos_lite)) {
   import("//build/lite/config/component/lite_component.gni")
   import("//build/lite/ndk/ndk.gni")
+
+  if (ohos_kernel_type != "liteos_m") {
+    MBEDTLS_SOURCES += [ "library/ssl_srv.c" ]
+    MBEDTLS_SOURCES -= [
+      "$MBEDTLSDIR/library/ssl_srv.c",
+      "$MBEDTLSDIR/port/src/tls_client.c",
+      "$MBEDTLSDIR/port/src/tls_certificate.c",
+    ]
+  }
 
   config("mbedtls_config") {
     include_dirs = MBEDTLS_INLCUDE_DIRS
