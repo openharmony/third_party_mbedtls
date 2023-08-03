@@ -17,7 +17,7 @@
 #define MBEDTLS_CLIENT_H
 
 #include "mbedtls/platform.h"
-#include "mbedtls/net_sockets"
+#include "mbedtls/net_sockets.h"
 #include "mbedtls/ssl.h"
 #include "mbedtls/entropy.h"
 #include "mbedtls/ctr_drbg.h"
@@ -25,6 +25,9 @@
 
 #define RET_ERROR -1;
 #define RET_EOK 0
+#ifndef LOG_CORE
+#define LOG_CORE 3
+#endif
 
 typedef struct MbedTLSSession {
     char *host;

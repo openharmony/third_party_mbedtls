@@ -30,7 +30,6 @@
 #ifndef OHOS_DEBUG
 #define DECORATOR_HILOG(op, fmt, args...) \
     do {                                  \
-        op(LOG_CORE, fmt, ##args);        \
     } while (0)
 #else
 #define DECORATOR_HILOG(op, fmt, args...)                                                \
