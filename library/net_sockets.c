@@ -193,8 +193,15 @@ int mbedtls_net_connect( mbedtls_net_context *ctx, const char *host,
     ret = MBEDTLS_ERR_NET_UNKNOWN_HOST;
     for( cur = addr_list; cur != NULL; cur = cur->ai_next )
     {
+#ifdef LITEOS_VERSION
+        if (cur->ai_family != AF_INET || cur->ai_socktype != SOCK_STREAM) {
+            continue;
+        }
+        ctx->fd = (int) socket(AF_INET, SOCK_STREAM, 0);
+#else
         ctx->fd = (int) socket( cur->ai_family, cur->ai_socktype,
                             cur->ai_protocol );
+#endif
         if( ctx->fd < 0 )
         {
             ret = MBEDTLS_ERR_NET_SOCKET_FAILED;
@@ -575,8 +582,12 @@ int mbedtls_net_recv( void *ctx, unsigned char *buf, size_t len )
     ret = check_fd( fd, 0 );
     if( ret != 0 )
         return( ret );
+#ifdef LITEOS_VERSION
+    ret = (int) recv( fd, buf, len, 0);
+#else
 
     ret = (int) read( fd, buf, len );
+#endif
 
     if( ret < 0 )
     {
@@ -658,7 +669,12 @@ int mbedtls_net_send( void *ctx, const unsigned char *buf, size_t len )
     if( ret != 0 )
         return( ret );
 
+#ifdef LITEOS_VERSION
+    ret = (int) send( fd, buf, len, 0);
+#else
+
     ret = (int) write( fd, buf, len );
+#endif
 
     if( ret < 0 )
     {

@@ -90,7 +90,7 @@ int MbedtlsClientContext(MbedTLSSession *session)
     int ret = mbedtls_x509_crt_parse(&session->cacert, (const unsigned char *)G_MBEDTLS_ROOT_CERTIFICATE,
                                      G_MBEDTLS_ROOT_CERTIFICATE_LEN);
     if (ret < 0) {
-        LOGE("mbedtls_x509_crt_parse error,  return -0x%x.", -ret);
+        LOGD("mbedtls_x509_crt_parse error,  return -0x%x.", -ret);
         return ret;
     }
 
@@ -135,7 +135,7 @@ int MbedtlsClientConnect(MbedTLSSession *session)
     if (session == NULL) {
         return -RET_ERROR;
     }
-    LOGI("connect: host:%s, port: %s", session->host, session->port);
+    LOGD("connect: host:%s, port: %s", session->host, session->port);
 
     int ret = mbedtls_net_connect(&session->server_fd, session->host, session->port, MBEDTLS_NET_PROTO_TCP);
     if (ret != 0) {
@@ -145,7 +145,6 @@ int MbedtlsClientConnect(MbedTLSSession *session)
     LOGD("Connected %s:%s fd:%d, success...", session->host, session->port, session->server_fd.fd);
 
     mbedtls_ssl_set_bio(&session->ssl, &session->server_fd, mbedtls_net_send, mbedtls_net_recv, NULL);
-    LOGD("ssl state=%d", session->ssl.state);
 
     while ((ret = mbedtls_ssl_handshake(&session->ssl)) != 0) {
         LOGD("mbedtls_ssl_handshake ret=0x%x.", -ret);
