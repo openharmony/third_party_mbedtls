@@ -23,7 +23,19 @@
         },
         "build": {
             "sub_component": [],
-            "inner_kits": [],
+            "inner_kits": [
+                {
+                    "header" : {
+                        "header_base": "//third_party/mbedtls/include",
+                        "header_files": [
+                            "md.h",
+                            "rsa.h",
+                            "x509.h"
+                        ]
+                    },
+                    "name" : "//third_party/mbedtls:mbedtls_shared"
+                }
+            ],
             "test": []
         }
     }
