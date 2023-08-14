@@ -111,6 +111,12 @@ static int wsa_init_done = 0;
 
 #include <stdint.h>
 
+#ifdef LITEOS_VERSION
+#include "lwip/sockets.h"
+#define close(fd) lwip_close(fd)
+#define shutdown(fd, how) lwip_shutdown(fd, how)
+#endif
+
 /*
  * Prepare for using the sockets interface
  */
