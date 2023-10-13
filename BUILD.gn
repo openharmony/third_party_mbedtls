@@ -19,7 +19,7 @@ MBEDTLS_SOURCES += [
   "library/debug.c",
   "library/ssl_cache.c",
   "library/ssl_cookie.c",
-  "library/ssl_srv.c",
+  "library/ssl_tls12_server.c",
   "library/ssl_ticket.c",
   "library/x509_create.c",
   "library/x509_csr.c",
@@ -28,7 +28,7 @@ MBEDTLS_SOURCES += [
 ]
 
 if (defined(ohos_lite)) {
-  MBEDTLS_SOURCES -= [ "library/ssl_srv.c" ]
+  MBEDTLS_SOURCES -= [ "library/ssl_tls12_server.c" ]
 }
 
 if (defined(ohos_lite)) {
@@ -36,9 +36,9 @@ if (defined(ohos_lite)) {
   import("//build/lite/ndk/ndk.gni")
 
   if (ohos_kernel_type != "liteos_m") {
-    MBEDTLS_SOURCES += [ "library/ssl_srv.c" ]
+    MBEDTLS_SOURCES += [ "library/ssl_tls12_server.c" ]
     MBEDTLS_SOURCES -= [
-      "$MBEDTLSDIR/library/ssl_srv.c",
+      "$MBEDTLSDIR/library/ssl_tls12_server.c",
       "$MBEDTLSDIR/port/src/tls_client.c",
       "$MBEDTLSDIR/port/src/tls_certificate.c",
     ]
