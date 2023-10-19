@@ -3596,8 +3596,8 @@ static int ssl_parse_record_header(mbedtls_ssl_context const *ssl,
      */
     rec->ver[0] = buf[rec_hdr_version_offset + 0];
     rec->ver[1] = buf[rec_hdr_version_offset + 1];
-    tls_version = mbedtls_ssl_read_version(buf + rec_hdr_version_offset,
-                                           ssl->conf->transport);
+    tls_version = (mbedtls_ssl_protocol_version)mbedtls_ssl_read_version(buf + rec_hdr_version_offset,
+                                                                         ssl->conf->transport);
 
     if (tls_version > ssl->conf->max_tls_version) {
         MBEDTLS_SSL_DEBUG_MSG(1, ("TLS version mismatch: got %u, expected max %u",
