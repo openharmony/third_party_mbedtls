@@ -214,7 +214,7 @@ static int rsa_verify_wrap(void *ctx, mbedtls_md_type_t md_alg,
         PSA_ALG_RSA_PKCS1V15_SIGN(mbedtls_hash_info_psa_from_md(md_alg));
     size_t rsa_len = mbedtls_rsa_get_len(rsa);
 
-    if (md_alg == MBEDTLS_MD_NONE && UINT_MAX < hash_len) {
+    if (md_alg == MBEDTLS_MD_NONE && (int)UINT_MAX < (int)hash_len) {
         return MBEDTLS_ERR_PK_BAD_INPUT_DATA;
     }
 
@@ -268,7 +268,7 @@ static int rsa_verify_wrap(void *ctx, mbedtls_md_type_t md_alg,
     mbedtls_rsa_context *rsa = (mbedtls_rsa_context *) ctx;
     size_t rsa_len = mbedtls_rsa_get_len(rsa);
 
-    if (md_alg == MBEDTLS_MD_NONE && UINT_MAX < hash_len) {
+    if (md_alg == MBEDTLS_MD_NONE && (int)UINT_MAX < (int)hash_len) {
         return MBEDTLS_ERR_PK_BAD_INPUT_DATA;
     }
 
@@ -381,7 +381,7 @@ static int rsa_sign_wrap(void *ctx, mbedtls_md_type_t md_alg,
 {
     mbedtls_rsa_context *rsa = (mbedtls_rsa_context *) ctx;
 
-    if (md_alg == MBEDTLS_MD_NONE && UINT_MAX < hash_len) {
+    if (md_alg == MBEDTLS_MD_NONE && (int)UINT_MAX < (int)hash_len) {
         return MBEDTLS_ERR_PK_BAD_INPUT_DATA;
     }
 

@@ -96,6 +96,6 @@ mbedtls_md_type_t mbedtls_hash_info_md_from_psa(psa_algorithm_t psa_alg);
  *
  * \return          The corresponding MD error code,
  */
-int MBEDTLS_DEPRECATED mbedtls_md_error_from_psa(psa_status_t status);
+int mbedtls_md_error_from_psa(psa_status_t status);
 #endif /* !MBEDTLS_DEPRECATED_REMOVED */
 #endif /* MBEDTLS_HASH_INFO_H */
