@@ -21,12 +21,16 @@
 #include "mbedtls/mbedtls_config.h"
 
 #include <stdlib.h>
-static inline void *custom_calloc( size_t nmemb, size_t size )
+
+#ifndef MBEDTLS_PLATFORM_STD_CALLOC
+static inline void *custom_calloc(size_t nmemb, size_t size)
 {
-    if( nmemb == 0 || size == 0 )
-        return( NULL );
-    return( calloc( nmemb, size ) );
+    if (nmemb == 0 || size == 0) {
+        return NULL;
+    }
+    return calloc(nmemb, size);
 }
 
 #define MBEDTLS_PLATFORM_MEMORY
 #define MBEDTLS_PLATFORM_STD_CALLOC custom_calloc
+#endif
