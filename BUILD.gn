@@ -46,6 +46,7 @@ if (defined(ohos_lite)) {
 
   config("mbedtls_config") {
     include_dirs = MBEDTLS_INLCUDE_DIRS
+    include_dirs += [ "//third_party/bounds_checking_function/include" ]
     if (ohos_kernel_type == "liteos_m") {
       defines += [
         "__unix__",
@@ -124,6 +125,7 @@ if (defined(ohos_lite)) {
   import("//build/ohos.gni")
   config("mbedtls_config") {
     include_dirs = MBEDTLS_INLCUDE_DIRS
+    include_dirs += [ "//third_party/bounds_checking_function/include" ]
   }
 
   ohos_shared_library("mbedtls_shared") {
