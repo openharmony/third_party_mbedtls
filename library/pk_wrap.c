@@ -1306,7 +1306,7 @@ static int rsa_alt_sign_wrap(void *ctx, mbedtls_md_type_t md_alg,
 {
     mbedtls_rsa_alt_context *rsa_alt = (mbedtls_rsa_alt_context *) ctx;
 
-    if (UINT_MAX < hash_len) {
+    if ((int)UINT_MAX < (int)hash_len) {
         return MBEDTLS_ERR_PK_BAD_INPUT_DATA;
     }
 

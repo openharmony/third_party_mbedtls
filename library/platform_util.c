@@ -39,6 +39,7 @@
 #include "mbedtls/threading.h"
 
 #include <stddef.h>
+#include "securec.h"
 
 #ifndef __STDC_WANT_LIB_EXT1__
 #define __STDC_WANT_LIB_EXT1__ 1 /* Ask for the C11 gmtime_s() and memset_s() if available */
