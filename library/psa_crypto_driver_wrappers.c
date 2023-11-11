@@ -447,7 +447,7 @@ uint32_t psa_driver_wrapper_sign_hash_get_num_ops(
 #endif /* PSA_CRYPTO_ACCELERATOR_DRIVER_PRESENT */
     }
 
-    return( PSA_ERROR_INVALID_ARGUMENT );
+    return (uint32_t)PSA_ERROR_INVALID_ARGUMENT;
 }
 
 uint32_t psa_driver_wrapper_verify_hash_get_num_ops(
@@ -471,7 +471,7 @@ uint32_t psa_driver_wrapper_verify_hash_get_num_ops(
 
     }
 
-    return( PSA_ERROR_INVALID_ARGUMENT );
+    return (uint32_t)PSA_ERROR_INVALID_ARGUMENT;
 }
 
 psa_status_t psa_driver_wrapper_sign_hash_start(
@@ -516,15 +516,6 @@ psa_status_t psa_driver_wrapper_sign_hash_start(
             ( void ) status;
             return( PSA_ERROR_INVALID_ARGUMENT );
     }
-
-    ( void ) operation;
-    ( void ) key_buffer;
-    ( void ) key_buffer_size;
-    ( void ) alg;
-    ( void ) hash;
-    ( void ) hash_length;
-
-        return( status );
 }
 
 psa_status_t psa_driver_wrapper_sign_hash_complete(
@@ -618,17 +609,6 @@ psa_status_t psa_driver_wrapper_verify_hash_start(
             ( void ) status;
             return( PSA_ERROR_INVALID_ARGUMENT );
     }
-
-    ( void ) operation;
-    ( void ) key_buffer;
-    ( void ) key_buffer_size;
-    ( void ) alg;
-    ( void ) hash;
-    ( void ) hash_length;
-    ( void ) signature;
-    ( void ) signature_length;
-
-    return( status );
 }
 
 psa_status_t psa_driver_wrapper_verify_hash_complete(
@@ -2859,7 +2839,6 @@ psa_status_t psa_driver_wrapper_pake_setup(
                 operation->id = PSA_CRYPTO_MBED_TLS_DRIVER_ID;
             return status;
 #endif
-            return( PSA_ERROR_NOT_SUPPORTED );
         /* Add cases for opaque driver here */
         default:
             /* Key is declared with a lifetime not known to us */

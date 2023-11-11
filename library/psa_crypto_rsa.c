@@ -323,7 +323,7 @@ static psa_status_t psa_rsa_decode_md_type(psa_algorithm_t alg,
     /* The Mbed TLS RSA module uses an unsigned int for hash length
      * parameters. Validate that it fits so that we don't risk an
      * overflow later. */
-    if (hash_length > UINT_MAX) {
+    if ((int)hash_length > (int)UINT_MAX) {
         return PSA_ERROR_INVALID_ARGUMENT;
     }
 
