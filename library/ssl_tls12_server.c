@@ -3681,6 +3681,13 @@ static int ssl_parse_client_key_exchange(mbedtls_ssl_context *ssl)
             MBEDTLS_SSL_DEBUG_MSG(1, ("Invalid data length"));
             return MBEDTLS_ERR_ECP_BAD_INPUT_DATA;
         }
+        if (data_len > sizeof(handshake->ecdh_psa_peerkey)) {
+            MBEDTLS_SSL_DEBUG_MSG(1, ("Invalid public key length: %" MBEDTLS_PRINTF_SIZET
+                                      " > %" MBEDTLS_PRINTF_SIZET,
+                                      data_len,
+                                      sizeof(handshake->ecdh_psa_peerkey)));
+            return MBEDTLS_ERR_SSL_HANDSHAKE_FAILURE;
+        }
 
         /* Store peer's ECDH public key. */
         memcpy(handshake->ecdh_psa_peerkey, p, data_len);
