@@ -38,6 +38,17 @@
                         ]
                     },
                     "name" : "//third_party/mbedtls:mbedtls_shared"
+                },
+                {
+                    "header" : {
+                        "header_base": "//third_party/mbedtls/include",
+                        "header_files": [
+                            "mbedtls/md.h",
+                            "mbedtls/rsa.h",
+                            "mbedtls/x509.h"
+                        ]
+                    },
+                    "name" : "//third_party/mbedtls:mbedtls_static"
                 }
             ],
             "test": []
