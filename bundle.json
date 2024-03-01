@@ -22,8 +22,12 @@
         "rom": "",
         "ram": "",
         "deps": {
-            "components": [],
-            "third_party": []
+            "components": [
+                "bounds_checking_function"
+            ],
+            "third_party": [
+                "bounds_checking_function"
+            ]
         },
         "build": {
             "sub_component": [],
@@ -38,6 +42,17 @@
                         ]
                     },
                     "name" : "//third_party/mbedtls:mbedtls_shared"
+                },
+                {
+                    "header" : {
+                        "header_base": "//third_party/mbedtls/include",
+                        "header_files": [
+                            "mbedtls/md.h",
+                            "mbedtls/rsa.h",
+                            "mbedtls/x509.h"
+                        ]
+                    },
+                    "name" : "//third_party/mbedtls:mbedtls_static"
                 }
             ],
             "test": []
