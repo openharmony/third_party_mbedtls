@@ -978,8 +978,7 @@ int mbedtls_rsa_private(mbedtls_rsa_context *ctx,
      */
     MBEDTLS_MPI_CHK(rsa_prepare_blinding(ctx, f_rng, p_rng));
     MBEDTLS_MPI_CHK(mbedtls_mpi_mul_mpi(&T, &T, &ctx->Vi));
-    MBEDTLS_MPI_CHK(mbedtls_mpi_copy(&input_blinded, &T));
-
+    
     MBEDTLS_MPI_CHK(mbedtls_mpi_copy(&input_blinded, &T));
 
     /*
