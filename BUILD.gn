@@ -77,8 +77,8 @@ if (defined(ohos_lite)) {
 
   group("mbedtls") {
     if (ohos_kernel_type == "liteos_m") {
-      if (ohos_security_huks_mbedtls_porting_path != "") {
-        public_deps = [ ohos_security_huks_mbedtls_porting_path ]
+      if (mbedtls_porting_path != "") {
+        public_deps = [ mbedtls_porting_path ]
       } else {
         public_deps = [ ":mbedtls_static" ]
       }

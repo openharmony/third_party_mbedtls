@@ -32,7 +32,7 @@ KERNELDIR = "//kernel/liteos_m/"
 defines = []
 declare_args() {
   # custom compile flag for bestechnic
-  ohos_security_huks_mbedtls_porting_path = ""
+  mbedtls_porting_path = ""
 }
 
 LIBRARYFILES = [
