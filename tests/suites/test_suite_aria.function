@@ -16,7 +16,7 @@
  * END_DEPENDENCIES
  */
 
-/* BEGIN_CASE */
+/* BEGIN_CASE depends_on:NOT_DEFINED */
 void aria_invalid_param()
 {
     mbedtls_aria_context ctx;
@@ -52,10 +52,8 @@ void aria_invalid_param()
                                          output));
 #endif /* MBEDTLS_CIPHER_MODE_CFB */
 
-#if defined(MBEDTLS_CIPHER_MODE_CBC) || defined(MBEDTLS_CIPHER_MODE_CFB)
 exit:
     return;
-#endif
 
 }
 /* END_CASE */
@@ -79,8 +77,8 @@ void aria_encrypt_ecb(data_t *key_str, data_t *src_str,
                                                output + i) == 0);
         }
 
-        TEST_MEMORY_COMPARE(output, expected_output->len,
-                            expected_output->x, expected_output->len);
+        ASSERT_COMPARE(output, expected_output->len,
+                       expected_output->x, expected_output->len);
     }
 
 exit:
@@ -88,7 +86,7 @@ exit:
 }
 /* END_CASE */
 
-/* BEGIN_CASE depends_on:!MBEDTLS_BLOCK_CIPHER_NO_DECRYPT */
+/* BEGIN_CASE */
 void aria_decrypt_ecb(data_t *key_str, data_t *src_str,
                       data_t *expected_output, int setkey_result)
 {
@@ -107,8 +105,8 @@ void aria_decrypt_ecb(data_t *key_str, data_t *src_str,
                                                output + i) == 0);
         }
 
-        TEST_MEMORY_COMPARE(output, expected_output->len,
-                            expected_output->x, expected_output->len);
+        ASSERT_COMPARE(output, expected_output->len,
+                       expected_output->x, expected_output->len);
     }
 
 exit:
@@ -132,8 +130,8 @@ void aria_encrypt_cbc(data_t *key_str, data_t *iv_str,
                                        src_str->len, iv_str->x, src_str->x,
                                        output) == cbc_result);
     if (cbc_result == 0) {
-        TEST_MEMORY_COMPARE(output, expected_output->len,
-                            expected_output->x, expected_output->len);
+        ASSERT_COMPARE(output, expected_output->len,
+                       expected_output->x, expected_output->len);
     }
 
 exit:
@@ -157,8 +155,8 @@ void aria_decrypt_cbc(data_t *key_str, data_t *iv_str,
                                        src_str->len, iv_str->x, src_str->x,
                                        output) == cbc_result);
     if (cbc_result == 0) {
-        TEST_MEMORY_COMPARE(output, expected_output->len,
-                            expected_output->x, expected_output->len);
+        ASSERT_COMPARE(output, expected_output->len,
+                       expected_output->x, expected_output->len);
     }
 
 exit:
@@ -184,8 +182,8 @@ void aria_encrypt_cfb128(data_t *key_str, data_t *iv_str,
                                           iv_str->x, src_str->x, output)
                 == result);
 
-    TEST_MEMORY_COMPARE(output, expected_output->len,
-                        expected_output->x, expected_output->len);
+    ASSERT_COMPARE(output, expected_output->len,
+                   expected_output->x, expected_output->len);
 
 exit:
     mbedtls_aria_free(&ctx);
@@ -210,8 +208,8 @@ void aria_decrypt_cfb128(data_t *key_str, data_t *iv_str,
                                           iv_str->x, src_str->x, output)
                 == result);
 
-    TEST_MEMORY_COMPARE(output, expected_output->len,
-                        expected_output->x, expected_output->len);
+    ASSERT_COMPARE(output, expected_output->len,
+                   expected_output->x, expected_output->len);
 
 exit:
     mbedtls_aria_free(&ctx);
@@ -236,8 +234,8 @@ void aria_encrypt_ctr(data_t *key_str, data_t *iv_str,
                                        iv_str->x, blk, src_str->x, output)
                 == result);
 
-    TEST_MEMORY_COMPARE(output, expected_output->len,
-                        expected_output->x, expected_output->len);
+    ASSERT_COMPARE(output, expected_output->len,
+                   expected_output->x, expected_output->len);
 
 exit:
     mbedtls_aria_free(&ctx);
@@ -262,8 +260,8 @@ void aria_decrypt_ctr(data_t *key_str, data_t *iv_str,
                                        iv_str->x, blk, src_str->x, output)
                 == result);
 
-    TEST_MEMORY_COMPARE(output, expected_output->len,
-                        expected_output->x, expected_output->len);
+    ASSERT_COMPARE(output, expected_output->len,
+                   expected_output->x, expected_output->len);
 
 exit:
     mbedtls_aria_free(&ctx);
