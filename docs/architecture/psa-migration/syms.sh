@@ -1,24 +1,29 @@
 #!/bin/sh
 #
 # Copyright The Mbed TLS Contributors
-# SPDX-License-Identifier: Apache-2.0 OR GPL-2.0-or-later
+# SPDX-License-Identifier: Apache-2.0
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may
+# not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+# WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 #
 # Purpose
 #
-# Show external links in built libraries (X509 or TLS) or modules. This is
-# usually done to list Crypto dependencies or to check modules'
-# interdependencies.
+# Show symbols in the X.509 and TLS libraries that are defined in another
+# libmbedtlsXXX.a library. This is usually done to list Crypto dependencies.
 #
 # Usage:
 # - build the library with debug symbols and the config you're interested in
 #   (default, full minus MBEDTLS_USE_PSA_CRYPTO, full, etc.)
-# - launch this script with 1 or more arguments depending on the analysis' goal:
-#     - if only 1 argument is used (which is the name of the used config,
-#       ex: full), then the analysis is done on libmbedx509 and libmbedtls
-#       libraries by default
-#     - if multiple arguments are provided, then modules' names (ex: pk,
-#       pkparse, pkwrite, etc) are expected after the 1st one and the analysis
-#       will be done on those modules instead of the libraries.
+# - run this script with the name of your config as the only argument
 
 set -eu
 
@@ -30,21 +35,10 @@ syms() {
     nm "$FILE" | sed -n "s/[0-9a-f ]*${TYPE} \(mbedtls_.*\)/\1/p" | sort -u
 }
 
-# Check if the provided name refers to a module or library and return the
-# same path with proper extension
-get_file_with_extension() {
-    BASE=$1
-    if [ -f $BASE.o ]; then
-        echo $BASE.o
-    elif [ -f $BASE.a ]; then
-        echo $BASE.a
-    fi
-}
-
 # create listings for the given library
 list() {
     NAME="$1"
-    FILE=$(get_file_with_extension "library/${NAME}")
+    FILE="library/libmbed${NAME}.a"
     PREF="${CONFIG}-$NAME"
 
     syms '[TRrD]' $FILE > ${PREF}-defined
@@ -60,14 +54,5 @@ list() {
 
 CONFIG="${1:-unknown}"
 
-# List of modules to check is provided as parameters
-if [ $# -gt 1 ]; then
-    shift 1
-    ITEMS_TO_CHECK="$@"
-else
-    ITEMS_TO_CHECK="libmbedx509 libmbedtls"
-fi
-
-for ITEM in $ITEMS_TO_CHECK; do
-    list $ITEM
-done
+list x509
+list tls
