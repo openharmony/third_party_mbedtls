@@ -128,6 +128,7 @@ if (defined(ohos_lite)) {
   }
 
   ohos_shared_library("mbedtls_shared") {
+    branch_protector_ret = "pac_ret"
     public_configs = [ ":mbedtls_config" ]
     output_name = "mbedtls"
     subsystem_name = "thirdparty"
