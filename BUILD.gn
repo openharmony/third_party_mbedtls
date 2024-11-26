@@ -132,6 +132,7 @@ if (defined(ohos_lite)) {
     public_configs = [ ":mbedtls_config" ]
     output_name = "mbedtls"
     subsystem_name = "thirdparty"
+    version_script = "libmbedtls.map"
     innerapi_tags = [
       "platformsdk_indirect",
       "sasdk",
