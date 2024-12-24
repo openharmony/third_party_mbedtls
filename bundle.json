@@ -2,7 +2,7 @@
     "name": "@ohos/mbedtls",
     "description": "An open source, portable, easy to use, readable and flexible SSL library.",
     "version": "5.0",
-    "license": "Apache V2,GPL V2.0",
+    "license": "Apache-2.0 OR GPL-2.0-or-later",
     "publishAs": "code-segment",
     "segment": {
         "destPath": "third_party/mbedtls"
