@@ -128,6 +128,12 @@ if (defined(ohos_lite)) {
   }
 
   ohos_shared_library("mbedtls_shared") {
+    if (mbedtls_enable_ssl_srv == true) {
+      defines = [
+        "MBEDTLS_SSL_SRV_C",
+      ]
+    }
+
     branch_protector_ret = "pac_ret"
     public_configs = [ ":mbedtls_config" ]
     output_name = "mbedtls"
