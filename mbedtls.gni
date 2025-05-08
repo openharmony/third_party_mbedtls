@@ -33,6 +33,7 @@ defines = []
 declare_args() {
   # custom compile flag for bestechnic
   mbedtls_porting_path = ""
+  mbedtls_enable_ssl_srv = false
 }
 
 LIBRARYFILES = [
