@@ -14,7 +14,8 @@
         "subsystem": "thirdparty",
         "syscap": [],
         "features": [
-            "mbedtls_porting_path"
+            "mbedtls_porting_path",
+            "mbedtls_enable_ssl_srv"
         ],
         "adapted_system_type": [
             "mini",
