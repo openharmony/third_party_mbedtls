@@ -69,6 +69,12 @@ if (defined(ohos_lite)) {
   }
 
   lite_library("mbedtls_static") {
+    if (board_toolchain_type == "clang") {
+      cflags = [
+        "-Wno-error=parentheses-equality",
+        "-Wno-error=implicit-function-declaration",
+      ]
+    }
     target_type = "static_library"
     public_configs = [ ":mbedtls_config" ]
     output_name = "mbedtls"
