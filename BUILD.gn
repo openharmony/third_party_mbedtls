@@ -136,6 +136,7 @@ if (defined(ohos_lite)) {
   ohos_shared_library("mbedtls_shared") {
     if (mbedtls_enable_ssl_srv == true) {
       defines = [
+        "MBEDTLS_KEY_EXCHANGE_PSK_ENABLED",
         "MBEDTLS_SSL_SRV_C",
       ]
     }
