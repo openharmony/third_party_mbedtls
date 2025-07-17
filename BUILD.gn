@@ -147,6 +147,7 @@ if (defined(ohos_lite)) {
     subsystem_name = "thirdparty"
     version_script = "libmbedtls.map"
     innerapi_tags = [
+      "chipsetsdk",
       "platformsdk_indirect",
       "sasdk",
     ]
