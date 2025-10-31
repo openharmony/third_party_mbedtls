@@ -1115,15 +1115,6 @@ int mbedtls_cipher_finish(mbedtls_cipher_context_t *ctx,
     return MBEDTLS_ERR_CIPHER_FEATURE_UNAVAILABLE;
 }
 
-#if defined(MBEDTLS_CIPHER_MODE_WITH_PADDING)
-int mbedtls_cipher_set_padding_mode(mbedtls_cipher_context_t *ctx,
-                                    mbedtls_cipher_padding_t mode)
-{
-    if (NULL == ctx->cipher_info ||
-        MBEDTLS_MODE_CBC != ((mbedtls_cipher_mode_t) ctx->cipher_info->mode)) {
-        return MBEDTLS_ERR_CIPHER_BAD_INPUT_DATA;
-    }
-
 int mbedtls_cipher_finish_padded(mbedtls_cipher_context_t *ctx,
                                  unsigned char *output, size_t *olen,
                                  size_t *invalid_padding)
@@ -1140,6 +1131,15 @@ int mbedtls_cipher_finish_padded(mbedtls_cipher_context_t *ctx,
 #endif
     return ret;
 }
+
+#if defined(MBEDTLS_CIPHER_MODE_WITH_PADDING)
+int mbedtls_cipher_set_padding_mode(mbedtls_cipher_context_t *ctx,
+                                    mbedtls_cipher_padding_t mode)
+{
+    if (NULL == ctx->cipher_info ||
+        MBEDTLS_MODE_CBC != ((mbedtls_cipher_mode_t) ctx->cipher_info->mode)) {
+        return MBEDTLS_ERR_CIPHER_BAD_INPUT_DATA;
+    }
 
 #if defined(MBEDTLS_USE_PSA_CRYPTO) && !defined(MBEDTLS_DEPRECATED_REMOVED)
     if (ctx->psa_enabled == 1) {
