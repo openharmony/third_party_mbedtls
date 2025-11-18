@@ -27,7 +27,6 @@
 #include "psa/crypto.h"
 #include "psa_util_internal.h"
 
-#if defined(MBEDTLS_SSL_TLS1_3_KEY_EXCHANGE_MODE_SOME_EPHEMERAL_ENABLED)
 /* Define a local translating function to save code size by not using too many
  * arguments in each translating place. */
 static int local_err_translation(psa_status_t status)
@@ -37,7 +36,16 @@ static int local_err_translation(psa_status_t status)
                                  psa_generic_status_to_mbedtls);
 }
 #define PSA_TO_MBEDTLS_ERR(status) local_err_translation(status)
-#endif
+
+int mbedtls_ssl_tls13_crypto_init(mbedtls_ssl_context *ssl)
+{
+    psa_status_t status = psa_crypto_init();
+    if (status != PSA_SUCCESS) {
+        (void) ssl; // unused when debugging is disabled
+        MBEDTLS_SSL_DEBUG_RET(1, "psa_crypto_init", status);
+    }
+    return PSA_TO_MBEDTLS_ERR(status);
+}
 
 const uint8_t mbedtls_ssl_tls13_hello_retry_request_magic[
     MBEDTLS_SERVER_HELLO_RANDOM_LEN] =
@@ -193,10 +201,12 @@ static void ssl_tls13_create_verify_structure(const unsigned char *transcript_ha
     idx = 64;
 
     if (from == MBEDTLS_SSL_IS_CLIENT) {
-        memcpy(verify_buffer + idx, MBEDTLS_SSL_TLS1_3_LBL_WITH_LEN(client_cv));
+        memcpy(verify_buffer + idx, mbedtls_ssl_tls13_labels.client_cv,
+               MBEDTLS_SSL_TLS1_3_LBL_LEN(client_cv));
         idx += MBEDTLS_SSL_TLS1_3_LBL_LEN(client_cv);
     } else { /* from == MBEDTLS_SSL_IS_SERVER */
-        memcpy(verify_buffer + idx, MBEDTLS_SSL_TLS1_3_LBL_WITH_LEN(server_cv));
+        memcpy(verify_buffer + idx, mbedtls_ssl_tls13_labels.server_cv,
+               MBEDTLS_SSL_TLS1_3_LBL_LEN(server_cv));
         idx += MBEDTLS_SSL_TLS1_3_LBL_LEN(server_cv);
     }
 
@@ -1371,9 +1381,11 @@ int mbedtls_ssl_tls13_check_early_data_len(mbedtls_ssl_context *ssl,
          ssl->total_early_data_size)) {
 
         MBEDTLS_SSL_DEBUG_MSG(
-            2, ("EarlyData: Too much early data received, %u + %" MBEDTLS_PRINTF_SIZET " > %u",
-                ssl->total_early_data_size, early_data_len,
-                ssl->session_negotiate->max_early_data_size));
+            2, ("EarlyData: Too much early data received, "
+                "%lu + %" MBEDTLS_PRINTF_SIZET " > %lu",
+                (unsigned long) ssl->total_early_data_size,
+                early_data_len,
+                (unsigned long) ssl->session_negotiate->max_early_data_size));
 
         MBEDTLS_SSL_PEND_FATAL_ALERT(
             MBEDTLS_SSL_ALERT_MSG_UNEXPECTED_MESSAGE,

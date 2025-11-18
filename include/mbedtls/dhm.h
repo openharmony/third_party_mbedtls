@@ -45,19 +45,7 @@
  */
 /*
  *  Copyright The Mbed TLS Contributors
- *  SPDX-License-Identifier: Apache-2.0
- *
- *  Licensed under the Apache License, Version 2.0 (the "License"); you may
- *  not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
- *
- *  http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- *  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
+ *  SPDX-License-Identifier: Apache-2.0 OR GPL-2.0-or-later
  */
 
 #ifndef MBEDTLS_DHM_H
@@ -195,7 +183,7 @@ int mbedtls_dhm_read_params(mbedtls_dhm_context *ctx,
  */
 int mbedtls_dhm_make_params(mbedtls_dhm_context *ctx, int x_size,
                             unsigned char *output, size_t *olen,
-                            int (*f_rng)(void *, unsigned char *, size_t),
+                            mbedtls_f_rng_t *f_rng,
                             void *p_rng);
 
 /**
@@ -262,7 +250,7 @@ int mbedtls_dhm_read_public(mbedtls_dhm_context *ctx,
  */
 int mbedtls_dhm_make_public(mbedtls_dhm_context *ctx, int x_size,
                             unsigned char *output, size_t olen,
-                            int (*f_rng)(void *, unsigned char *, size_t),
+                            mbedtls_f_rng_t *f_rng,
                             void *p_rng);
 
 /**
@@ -293,7 +281,7 @@ int mbedtls_dhm_make_public(mbedtls_dhm_context *ctx, int x_size,
  */
 int mbedtls_dhm_calc_secret(mbedtls_dhm_context *ctx,
                             unsigned char *output, size_t output_size, size_t *olen,
-                            int (*f_rng)(void *, unsigned char *, size_t),
+                            mbedtls_f_rng_t *f_rng,
                             void *p_rng);
 
 /**
@@ -325,7 +313,7 @@ size_t mbedtls_dhm_get_len(const mbedtls_dhm_context *ctx);
  *                 initialized.
  *
  * \return         \c 0 on success.
- * \return         #MBEDTLS_ERR_DHM_BAD_INPUT_DATA if \p field is invalid.
+ * \return         #MBEDTLS_ERR_DHM_BAD_INPUT_DATA if \p param is invalid.
  * \return         An \c MBEDTLS_ERR_MPI_XXX error code if the copy fails.
  */
 int mbedtls_dhm_get_value(const mbedtls_dhm_context *ctx,
