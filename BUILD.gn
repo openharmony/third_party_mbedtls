@@ -39,8 +39,6 @@ if (defined(ohos_lite)) {
     MBEDTLS_SOURCES += [ "library/ssl_tls12_server.c" ]
     MBEDTLS_SOURCES -= [
       "$MBEDTLSDIR/library/ssl_tls12_server.c",
-      "$MBEDTLSDIR/port/src/tls_client.c",
-      "$MBEDTLSDIR/port/src/tls_certificate.c",
     ]
   }
 

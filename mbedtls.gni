@@ -144,8 +144,6 @@ MBEDTLS_INLCUDE_DIRS = [
 if (defined(ohos_lite)) {
   MBEDTLS_SOURCES += [
     "$MBEDTLSDIR/library/ssl_tls12_server.c",
-    "$MBEDTLSDIR/port/src/tls_client.c",
-    "$MBEDTLSDIR/port/src/tls_certificate.c",
   ]
 
   MBEDTLS_INLCUDE_DIRS += [ "$MBEDTLSDIR/port/include" ]
