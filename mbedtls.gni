@@ -40,7 +40,6 @@ LIBRARYFILES = [
   "$MBEDTLSDIR/library/aes.c",
   "$MBEDTLSDIR/library/aesni.c",
   "$MBEDTLSDIR/library/aesce.c",
-  "$MBEDTLSDIR/library/alignment.c",
   "$MBEDTLSDIR/library/aria.c",
   "$MBEDTLSDIR/library/asn1parse.c",
   "$MBEDTLSDIR/library/asn1write.c",
