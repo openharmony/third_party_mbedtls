@@ -39,6 +39,8 @@ if (defined(ohos_lite)) {
     MBEDTLS_SOURCES += [ "library/ssl_tls12_server.c" ]
     MBEDTLS_SOURCES -= [
       "$MBEDTLSDIR/library/ssl_tls12_server.c",
+      "$MBEDTLSDIR/port/src/tls_client.c",
+      "$MBEDTLSDIR/port/src/tls_certificate.c",
     ]
   }
 
@@ -48,11 +50,13 @@ if (defined(ohos_lite)) {
     if (ohos_kernel_type == "liteos_m") {
       defines += [
         "__unix__",
+        "MBEDTLS_CONFIG_FILE=<../port/config/config_liteos_m.h>",
       ]
     }
     if (ohos_kernel_type == "liteos_a") {
       defines += [
         "__unix__",
+        "MBEDTLS_CONFIG_FILE=<../port/config/config_liteos_a.h>",
       ]
     }
   }
