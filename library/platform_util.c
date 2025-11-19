@@ -224,8 +224,7 @@ void (*mbedtls_test_hook_test_fail)(const char *, int, const char *);
 #include <unistd.h>
 #endif \
     /* !_WIN32 && (unix || __unix || __unix__ || (__APPLE__ && __MACH__) || __HAIKU__ || __midipix__) */
-#if (defined(_POSIX_VERSION) && _POSIX_VERSION >= 199309L) || defined(__HAIKU__)
- || defined(__unix__)
+#if (defined(_POSIX_VERSION) && _POSIX_VERSION >= 199309L) || defined(__HAIKU__) || defined(__unix__)
 mbedtls_ms_time_t mbedtls_ms_time(void)
 {
     int ret;
