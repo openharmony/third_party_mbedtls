@@ -2505,7 +2505,7 @@
  *          library/camellia.c
  *          library/cipher.c
  */
-//#define MBEDTLS_BLOCK_CIPHER_NO_DECRYPT
+#define MBEDTLS_BLOCK_CIPHER_NO_DECRYPT
 
 /**
  * \def MBEDTLS_BIGNUM_C
