@@ -329,8 +329,15 @@ typedef struct mbedtls_cipher_context_t {
     /** Padding functions to use, if relevant for
      * the specific cipher mode.
      */
-    void(*MBEDTLS_PRIVATE(add_padding))(unsigned char *output, size_t olen, size_t data_len);
-    int(*MBEDTLS_PRIVATE(get_padding))(unsigned char *input, size_t ilen, size_t *data_len);
+    void(*MBEDTLS_PRIVATE(add_padding))(unsigned char *output, size_t olen,
+                                        size_t data_len);
+    /* Report invalid-padding condition through the output parameter
+     * invalid_padding. To minimize changes in Mbed TLS 3.6, where this
+     * declaration is in a public header, use the public type size_t
+     * rather than the internal type mbedtls_ct_condition_t. */
+    int(*MBEDTLS_PRIVATE(get_padding))(unsigned char *input, size_t ilen,
+                                       size_t *data_len,
+                                       size_t *invalid_padding);
 #endif
 
     /** Buffer for input that has not been processed yet. */
@@ -878,23 +885,24 @@ int mbedtls_cipher_set_iv(mbedtls_cipher_context_t *ctx,
  *
  * \note          With non-AEAD ciphers, the order of calls for each message
  *                is as follows:
- *                1. mbedtls_cipher_set_iv() if the mode uses an IV/nonce.
- *                2. mbedtls_cipher_reset()
- *                3. mbedtls_cipher_update() one or more times
- *                4. mbedtls_cipher_finish() or mbedtls_cipher_finish_padded()
+ *                1. mbedtls_cipher_set_iv() if the mode uses an IV/nonce;
+ *                2. mbedtls_cipher_reset();
+ *                3. mbedtls_cipher_update() zero, one or more times;
+ *                4. mbedtls_cipher_finish_padded() (recommended for decryption
+ *                   if the mode uses padding) or mbedtls_cipher_finish().
  *                .
  *                This sequence can be repeated to encrypt or decrypt multiple
  *                messages with the same key.
  *
  * \note          With AEAD ciphers, the order of calls for each message
  *                is as follows:
- *                1. mbedtls_cipher_set_iv() if the mode uses an IV/nonce.
- *                2. mbedtls_cipher_reset()
- *                3. mbedtls_cipher_update_ad()
- *                4. mbedtls_cipher_update() one or more times
- *                5. mbedtls_cipher_finish() or mbedtls_cipher_finish_padded()
+ *                1. mbedtls_cipher_set_iv() if the mode uses an IV/nonce;
+ *                2. mbedtls_cipher_reset();
+ *                3. mbedtls_cipher_update_ad();
+ *                4. mbedtls_cipher_update() zero, one or more times;
+ *                5. mbedtls_cipher_finish() (or mbedtls_cipher_finish_padded());
  *                6. mbedtls_cipher_check_tag() (for decryption) or
- *                mbedtls_cipher_write_tag() (for encryption).
+ *                   mbedtls_cipher_write_tag() (for encryption).
  *                .
  *                This sequence can be repeated to encrypt or decrypt multiple
  *                messages with the same key.
@@ -975,7 +983,7 @@ int mbedtls_cipher_update(mbedtls_cipher_context_t *ctx,
  *                      Therefore applications that call this function for
  *                      decryption with a cipher that involves padding
  *                      should take care around error handling. Preferably,
- *                      such applicatios should use
+ *                      such applications should use
  *                      mbedtls_cipher_finish_padded() instead of this function.
  *
  * \param ctx           The generic cipher context. This must be initialized and
@@ -984,6 +992,11 @@ int mbedtls_cipher_update(mbedtls_cipher_context_t *ctx,
  *                      buffer of at least block_size Bytes.
  * \param olen          The length of the data written to the \p output buffer.
  *                      This may not be \c NULL.
+ *                      Note that when decrypting in a mode with padding,
+ *                      the actual output length is sensitive and may be
+ *                      used to mount a padding oracle attack (see warning
+ *                      above), although less efficiently than through
+ *                      the invalid-padding condition.
  *
  * \return              \c 0 on success.
  * \return              #MBEDTLS_ERR_CIPHER_BAD_INPUT_DATA on
@@ -1018,6 +1031,10 @@ int mbedtls_cipher_finish(mbedtls_cipher_context_t *ctx,
  *                      buffer of at least block_size Bytes.
  * \param[out] olen     The length of the data written to the \p output buffer.
  *                      This may not be \c NULL.
+ *                      Note that when decrypting in a mode with padding,
+ *                      the actual output length is sensitive and may be
+ *                      used to mount a padding oracle attack (see warning
+ *                      on mbedtls_cipher_finish()).
  * \param[out] invalid_padding
  *                      If this function returns \c 0 on decryption,
  *                      \p *invalid_padding is \c 0 if the ciphertext was
@@ -1045,7 +1062,8 @@ int mbedtls_cipher_finish_padded(mbedtls_cipher_context_t *ctx,
 /**
  * \brief               This function writes a tag for AEAD ciphers.
  *                      Currently supported with GCM and ChaCha20+Poly1305.
- *                      This must be called after mbedtls_cipher_finish().
+ *                      This must be called after mbedtls_cipher_finish()
+ *                      or mbedtls_cipher_finish_padded().
  *
  * \param ctx           The generic cipher context. This must be initialized,
  *                      bound to a key, and have just completed a cipher
@@ -1064,7 +1082,8 @@ int mbedtls_cipher_write_tag(mbedtls_cipher_context_t *ctx,
 /**
  * \brief               This function checks the tag for AEAD ciphers.
  *                      Currently supported with GCM and ChaCha20+Poly1305.
- *                      This must be called after mbedtls_cipher_finish().
+ *                      This must be called after mbedtls_cipher_finish()
+ *                      or mbedtls_cipher_finish_padded().
  *
  * \param ctx           The generic cipher context. This must be initialized.
  * \param tag           The buffer holding the tag. This must be a readable
