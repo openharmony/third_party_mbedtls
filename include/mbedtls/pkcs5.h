@@ -170,7 +170,7 @@ int mbedtls_pkcs5_pbkdf2_hmac_ext(mbedtls_md_type_t md_type,
  *
  * \returns        0 on success, or a MBEDTLS_ERR_XXX code if verification fails.
  */
-int mbedtls_pkcs5_pbkdf2_hmac(mbedtls_md_context_t *ctx,
+int MBEDTLS_DEPRECATED mbedtls_pkcs5_pbkdf2_hmac(mbedtls_md_context_t *ctx,
                                                  const unsigned char *password,
                                                  size_t plen,
                                                  const unsigned char *salt,

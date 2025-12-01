@@ -27,7 +27,6 @@
 #include "mbedtls/threading.h"
 
 #include <stddef.h>
-#include "securec.h"
 
 #ifndef __STDC_WANT_LIB_EXT1__
 #define __STDC_WANT_LIB_EXT1__ 1 /* Ask for the C11 gmtime_s() and memset_s() if available */
@@ -150,7 +149,7 @@ void mbedtls_zeroize_and_free(void *buf, size_t len)
 #include <time.h>
 #if !defined(_WIN32) && (defined(unix) || \
     defined(__unix) || defined(__unix__) || (defined(__APPLE__) && \
-    defined(__MACH__)) || defined__midipix__)
+    defined(__MACH__)) || defined(__midipix__))
 #include <unistd.h>
 #endif /* !_WIN32 && (unix || __unix || __unix__ ||
         * (__APPLE__ && __MACH__) || __midipix__) */
