@@ -73,7 +73,7 @@ typedef uint64_t __packed mbedtls_uint64_unaligned_t;
  *
  * The manual states:
  * "The packed attribute specifies that a variable or structure field should have the smallest
- *  possible alignmentâ€”one byte for a variable"
+ *  possible alignment¡ªone byte for a variable"
  * https://gcc.gnu.org/onlinedocs/gcc-4.5.4/gcc/Variable-Attributes.html
  *
  * Previous implementations used __attribute__((__aligned__(1)), but had issues with a gcc bug:
@@ -107,25 +107,7 @@ typedef struct {
  * \param   p pointer to 2 bytes of data
  * \return  Data at the given address
  */
-#if defined(__IAR_SYSTEMS_ICC__)
-#pragma inline = forced
-#elif defined(__GNUC__)
-__attribute__((always_inline))
-#endif
-static inline uint16_t mbedtls_get_unaligned_uint16(const void *p)
-{
-    uint16_t r;
-#if defined(UINT_UNALIGNED)
-    mbedtls_uint16_unaligned_t *p16 = (mbedtls_uint16_unaligned_t *) p;
-    r = *p16;
-#elif defined(UINT_UNALIGNED_STRUCT)
-    mbedtls_uint16_unaligned_t *p16 = (mbedtls_uint16_unaligned_t *) p;
-    r = p16->x;
-#else
-    memcpy(&r, p, sizeof(r));
-#endif
-    return r;
-}
+uint16_t mbedtls_get_unaligned_uint16(const void *p);
 
 /**
  * Write the unsigned 16 bits integer to the given address, which need not
@@ -134,23 +116,7 @@ static inline uint16_t mbedtls_get_unaligned_uint16(const void *p)
  * \param   p pointer to 2 bytes of data
  * \param   x data to write
  */
-#if defined(__IAR_SYSTEMS_ICC__)
-#pragma inline = forced
-#elif defined(__GNUC__)
-__attribute__((always_inline))
-#endif
-static inline void mbedtls_put_unaligned_uint16(void *p, uint16_t x)
-{
-#if defined(UINT_UNALIGNED)
-    mbedtls_uint16_unaligned_t *p16 = (mbedtls_uint16_unaligned_t *) p;
-    *p16 = x;
-#elif defined(UINT_UNALIGNED_STRUCT)
-    mbedtls_uint16_unaligned_t *p16 = (mbedtls_uint16_unaligned_t *) p;
-    p16->x = x;
-#else
-    memcpy(p, &x, sizeof(x));
-#endif
-}
+void mbedtls_put_unaligned_uint16(void *p, uint16_t x);
 
 /**
  * Read the unsigned 32 bits integer from the given address, which need not
@@ -159,25 +125,7 @@ static inline void mbedtls_put_unaligned_uint16(void *p, uint16_t x)
  * \param   p pointer to 4 bytes of data
  * \return  Data at the given address
  */
-#if defined(__IAR_SYSTEMS_ICC__)
-#pragma inline = forced
-#elif defined(__GNUC__)
-__attribute__((always_inline))
-#endif
-static inline uint32_t mbedtls_get_unaligned_uint32(const void *p)
-{
-    uint32_t r;
-#if defined(UINT_UNALIGNED)
-    mbedtls_uint32_unaligned_t *p32 = (mbedtls_uint32_unaligned_t *) p;
-    r = *p32;
-#elif defined(UINT_UNALIGNED_STRUCT)
-    mbedtls_uint32_unaligned_t *p32 = (mbedtls_uint32_unaligned_t *) p;
-    r = p32->x;
-#else
-    memcpy(&r, p, sizeof(r));
-#endif
-    return r;
-}
+uint32_t mbedtls_get_unaligned_uint32(const void *p);
 
 /**
  * Write the unsigned 32 bits integer to the given address, which need not
@@ -186,23 +134,7 @@ static inline uint32_t mbedtls_get_unaligned_uint32(const void *p)
  * \param   p pointer to 4 bytes of data
  * \param   x data to write
  */
-#if defined(__IAR_SYSTEMS_ICC__)
-#pragma inline = forced
-#elif defined(__GNUC__)
-__attribute__((always_inline))
-#endif
-static inline void mbedtls_put_unaligned_uint32(void *p, uint32_t x)
-{
-#if defined(UINT_UNALIGNED)
-    mbedtls_uint32_unaligned_t *p32 = (mbedtls_uint32_unaligned_t *) p;
-    *p32 = x;
-#elif defined(UINT_UNALIGNED_STRUCT)
-    mbedtls_uint32_unaligned_t *p32 = (mbedtls_uint32_unaligned_t *) p;
-    p32->x = x;
-#else
-    memcpy(p, &x, sizeof(x));
-#endif
-}
+void mbedtls_put_unaligned_uint32(void *p, uint32_t x);
 
 /**
  * Read the unsigned 64 bits integer from the given address, which need not
@@ -211,25 +143,7 @@ static inline void mbedtls_put_unaligned_uint32(void *p, uint32_t x)
  * \param   p pointer to 8 bytes of data
  * \return  Data at the given address
  */
-#if defined(__IAR_SYSTEMS_ICC__)
-#pragma inline = forced
-#elif defined(__GNUC__)
-__attribute__((always_inline))
-#endif
-static inline uint64_t mbedtls_get_unaligned_uint64(const void *p)
-{
-    uint64_t r;
-#if defined(UINT_UNALIGNED)
-    mbedtls_uint64_unaligned_t *p64 = (mbedtls_uint64_unaligned_t *) p;
-    r = *p64;
-#elif defined(UINT_UNALIGNED_STRUCT)
-    mbedtls_uint64_unaligned_t *p64 = (mbedtls_uint64_unaligned_t *) p;
-    r = p64->x;
-#else
-    memcpy(&r, p, sizeof(r));
-#endif
-    return r;
-}
+uint64_t mbedtls_get_unaligned_uint64(const void *p);
 
 /**
  * Write the unsigned 64 bits integer to the given address, which need not
@@ -238,24 +152,7 @@ static inline uint64_t mbedtls_get_unaligned_uint64(const void *p)
  * \param   p pointer to 8 bytes of data
  * \param   x data to write
  */
-#if defined(__IAR_SYSTEMS_ICC__)
-#pragma inline = forced
-#elif defined(__GNUC__)
-__attribute__((always_inline))
-#endif
-static inline void mbedtls_put_unaligned_uint64(void *p, uint64_t x)
-{
-#if defined(UINT_UNALIGNED)
-    mbedtls_uint64_unaligned_t *p64 = (mbedtls_uint64_unaligned_t *) p;
-    *p64 = x;
-#elif defined(UINT_UNALIGNED_STRUCT)
-    mbedtls_uint64_unaligned_t *p64 = (mbedtls_uint64_unaligned_t *) p;
-    p64->x = x;
-#else
-    memcpy(p, &x, sizeof(x));
-#endif
-}
-
+void mbedtls_put_unaligned_uint64(void *p, uint64_t x);
 #if defined(MBEDTLS_POP_IAR_LANGUAGE_PRAGMA)
 #pragma language=restore
 #endif
