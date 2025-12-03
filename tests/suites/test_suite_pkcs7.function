@@ -17,7 +17,7 @@
  * END_DEPENDENCIES
  */
 /* BEGIN_SUITE_HELPERS */
-static int pkcs7_parse_buffer(unsigned char *pkcs7_buf, int buflen)
+int pkcs7_parse_buffer(unsigned char *pkcs7_buf, int buflen)
 {
     int res;
     mbedtls_pkcs7 pkcs7;

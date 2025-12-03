@@ -204,9 +204,9 @@ struct options {
     int format;                 /* format                               */
 } opt;
 
-static int write_certificate(mbedtls_x509write_cert *crt, const char *output_file,
-                             int (*f_rng)(void *, unsigned char *, size_t),
-                             void *p_rng)
+int write_certificate(mbedtls_x509write_cert *crt, const char *output_file,
+                      int (*f_rng)(void *, unsigned char *, size_t),
+                      void *p_rng)
 {
     int ret;
     FILE *f;
@@ -249,8 +249,8 @@ static int write_certificate(mbedtls_x509write_cert *crt, const char *output_fil
     return 0;
 }
 
-static int parse_serial_decimal_format(unsigned char *obuf, size_t obufmax,
-                                       const char *ibuf, size_t *len)
+int parse_serial_decimal_format(unsigned char *obuf, size_t obufmax,
+                                const char *ibuf, size_t *len)
 {
     unsigned long long int dec;
     unsigned int remaining_bytes = sizeof(dec);
@@ -594,12 +594,13 @@ usage:
                     cur->node.san.unstructured_name.len = sizeof(ip);
                 } else if (strcmp(q, "DN") == 0) {
                     cur->node.type = MBEDTLS_X509_SAN_DIRECTORY_NAME;
-                    /* Work around an API mismatch between string_to_names() and
+                    cur->node.type = MBEDTLS_X509_SAN_DIRECTORY_NAME;
+                    /* Work around an API mismatch between string_to names() and
                      * mbedtls_x509_subject_alternative_name, which holds an
                      * actual mbedtls_x509_name while a pointer to one would be
                      * more convenient here. (Note mbedtls_x509_name and
-                     * mbedtls_asn1_named_data are synonymous, again
-                     * string_to_names() uses one while
+                     * mbedtls_ans1_named_data are synonymous, again
+                     * string_to_names () uses one while
                      * cur->node.san.directory_name is nominally the other.) */
                     mbedtls_asn1_named_data *tmp_san_dirname = NULL;
                     if ((ret = mbedtls_x509_string_to_names(&tmp_san_dirname,
@@ -1004,7 +1005,7 @@ usage:
     exit_code = MBEDTLS_EXIT_SUCCESS;
 
 exit:
-    cur = opt.san_list;
+cur = opt.san_list;
     while (cur != NULL) {
         mbedtls_x509_san_list *next = cur->next;
         /* Note: mbedtls_x509_free_subject_alt_name() is not what we want here.
@@ -1020,7 +1021,6 @@ exit:
         mbedtls_free(cur);
         cur = next;
     }
-
 #if defined(MBEDTLS_X509_CSR_PARSE_C)
     mbedtls_x509_csr_free(&csr);
 #endif /* MBEDTLS_X509_CSR_PARSE_C */
