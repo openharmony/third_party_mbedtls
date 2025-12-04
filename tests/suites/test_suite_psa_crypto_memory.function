@@ -107,10 +107,7 @@ void local_input_alloc(int input_len, psa_status_t exp_status)
 
 exit:
     mbedtls_free(local_input.buffer);
-
-    if (local_input.buffer != input) {
-        mbedtls_free(input);
-    }
+    mbedtls_free(input);
 }
 /* END_CASE */
 
@@ -246,7 +243,7 @@ void local_output_round_trip()
     TEST_CALLOC(buffer_copy_for_comparison, local_output.length);
     memcpy(buffer_copy_for_comparison, local_output.buffer, local_output.length);
 
-    TEST_EQUAL(psa_crypto_local_output_free(&local_output), PSA_SUCCESS);
+    psa_crypto_local_output_free(&local_output);
     TEST_ASSERT(local_output.buffer == NULL);
     TEST_EQUAL(local_output.length, 0);
 

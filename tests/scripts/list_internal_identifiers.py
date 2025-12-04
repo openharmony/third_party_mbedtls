@@ -1,7 +1,19 @@
 #!/usr/bin/env python3
 #
 # Copyright The Mbed TLS Contributors
-# SPDX-License-Identifier: Apache-2.0 OR GPL-2.0-or-later
+# SPDX-License-Identifier: Apache-2.0
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may
+# not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+# WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
 """
 This script generates a file called identifiers that contains all Mbed TLS
@@ -10,8 +22,7 @@ previously `list-identifiers.sh --internal`, and is useful for generating an
 exclusion file list for ABI/API checking, since we do not promise compatibility
 for them.
 
-It uses the CodeParser class from framework/scripts/check_names.py to perform
-the parsing.
+It uses the CodeParser class from check_names.py to perform the parsing.
 
 The script returns 0 on success, 1 if there is a script error.
 Must be run from Mbed TLS root.
@@ -19,7 +30,6 @@ Must be run from Mbed TLS root.
 
 import argparse
 import logging
-import scripts_path # pylint: disable=unused-import
 from check_names import CodeParser
 
 def main():

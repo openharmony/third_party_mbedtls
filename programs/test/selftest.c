@@ -241,7 +241,7 @@ static void create_entropy_seed_file(void)
 }
 #endif
 
-static int mbedtls_entropy_self_test_wrapper(int verbose)
+int mbedtls_entropy_self_test_wrapper(int verbose)
 {
 #if defined(MBEDTLS_ENTROPY_NV_SEED) && !defined(MBEDTLS_NO_PLATFORM_ENTROPY)
     create_entropy_seed_file();
@@ -252,7 +252,7 @@ static int mbedtls_entropy_self_test_wrapper(int verbose)
 
 #if defined(MBEDTLS_SELF_TEST)
 #if defined(MBEDTLS_MEMORY_BUFFER_ALLOC_C)
-static int mbedtls_memory_buffer_alloc_free_and_self_test(int verbose)
+int mbedtls_memory_buffer_alloc_free_and_self_test(int verbose)
 {
     if (verbose != 0) {
 #if defined(MBEDTLS_MEMORY_DEBUG)

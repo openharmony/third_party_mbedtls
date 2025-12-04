@@ -94,22 +94,22 @@ int main(void)
  * global options
  */
 struct options {
-    const char *filename;             /* filename of the key file                 */
-    const char *password;             /* password for the key file                */
-    int debug_level;                  /* level of debugging                       */
+    const char *filename;             /* filename of the key file             */
+    const char *password;             /* password for the key file            */
+    int debug_level;                  /* level of debugging                   */
     const char *output_file;          /* where to store the constructed key file  */
-    const char *subject_name;         /* subject name for certificate request     */
-    mbedtls_x509_san_list *san_list;  /* subjectAltName for certificate request   */
-    unsigned char key_usage;          /* key usage flags                          */
-    int force_key_usage;              /* Force adding the KeyUsage extension      */
-    unsigned char ns_cert_type;       /* NS cert type                             */
-    int force_ns_cert_type;           /* Force adding NsCertType extension        */
-    mbedtls_md_type_t md_alg;         /* Hash algorithm used for signature.       */
+    const char *subject_name;         /* subject name for certificate request   */
+    mbedtls_x509_san_list *san_list;  /* subjectAltName for certificate request */
+    unsigned char key_usage;          /* key usage flags                      */
+    int force_key_usage;              /* Force adding the KeyUsage extension  */
+    unsigned char ns_cert_type;       /* NS cert type                         */
+    int force_ns_cert_type;           /* Force adding NsCertType extension    */
+    mbedtls_md_type_t md_alg;         /* Hash algorithm used for signature.   */
 } opt;
 
-static int write_certificate_request(mbedtls_x509write_csr *req, const char *output_file,
-                                     int (*f_rng)(void *, unsigned char *, size_t),
-                                     void *p_rng)
+int write_certificate_request(mbedtls_x509write_csr *req, const char *output_file,
+                              int (*f_rng)(void *, unsigned char *, size_t),
+                              void *p_rng)
 {
     int ret;
     FILE *f;
@@ -273,12 +273,12 @@ usage:
                     cur->node.san.unstructured_name.len = sizeof(ip);
                 } else if (strcmp(q, "DN") == 0) {
                     cur->node.type = MBEDTLS_X509_SAN_DIRECTORY_NAME;
-                    /* Work around an API mismatch between string_to_names() and
+                    /* Work around an API mismatch between string_to names() and
                      * mbedtls_x509_subject_alternative_name, which holds an
                      * actual mbedtls_x509_name while a pointer to one would be
                      * more convenient here. (Note mbedtls_x509_name and
-                     * mbedtls_asn1_named_data are synonymous, again
-                     * string_to_names() uses one while
+                     * mbedtls_ans1_named_data are synonymous, again
+                     * string_to_names () uses one while
                      * cur->node.san.directory_name is nominally the other.) */
                     mbedtls_asn1_named_data *tmp_san_dirname = NULL;
                     if ((ret = mbedtls_x509_string_to_names(&tmp_san_dirname,
@@ -524,6 +524,7 @@ exit:
         mbedtls_free(cur);
         cur = next;
     }
+
 
     mbedtls_exit(exit_code);
 }
