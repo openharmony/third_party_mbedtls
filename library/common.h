@@ -158,151 +158,12 @@ static inline const unsigned char *mbedtls_buffer_offset_const(
     return p == NULL ? NULL : p + n;
 }
 
-/* Always inline mbedtls_xor() for similar reasons as mbedtls_xor_no_simd(). */
-#if defined(__IAR_SYSTEMS_ICC__)
-#pragma inline = forced
-#elif defined(__GNUC__)
-__attribute__((always_inline))
-#endif
-/**
- * Perform a fast block XOR operation, such that
- * r[i] = a[i] ^ b[i] where 0 <= i < n
- *
- * \param   r Pointer to result (buffer of at least \p n bytes). \p r
- *            may be equal to either \p a or \p b, but behaviour when
- *            it overlaps in other ways is undefined.
- * \param   a Pointer to input (buffer of at least \p n bytes)
- * \param   b Pointer to input (buffer of at least \p n bytes)
- * \param   n Number of bytes to process.
- *
- * \note      Depending on the situation, it may be faster to use either mbedtls_xor() or
- *            mbedtls_xor_no_simd() (these are functionally equivalent).
- *            If the result is used immediately after the xor operation in non-SIMD code (e.g, in
- *            AES-CBC), there may be additional latency to transfer the data from SIMD to scalar
- *            registers, and in this case, mbedtls_xor_no_simd() may be faster. In other cases where
- *            the result is not used immediately (e.g., in AES-CTR), mbedtls_xor() may be faster.
- *            For targets without SIMD support, they will behave the same.
- */
-static inline void mbedtls_xor(unsigned char *r,
-                               const unsigned char *a,
-                               const unsigned char *b,
-                               size_t n)
-{
-    size_t i = 0;
-#if defined(MBEDTLS_EFFICIENT_UNALIGNED_ACCESS)
-#if defined(MBEDTLS_HAVE_NEON_INTRINSICS) && \
-    (!(defined(MBEDTLS_COMPILER_IS_GCC) && MBEDTLS_GCC_VERSION < 70300))
-    /* Old GCC versions generate a warning here, so disable the NEON path for these compilers */
-    for (; (i + 16) <= n; i += 16) {
-        uint8x16_t v1 = vld1q_u8(a + i);
-        uint8x16_t v2 = vld1q_u8(b + i);
-        uint8x16_t x = veorq_u8(v1, v2);
-        vst1q_u8(r + i, x);
-    }
-#if defined(__IAR_SYSTEMS_ICC__)
-    /* This if statement helps some compilers (e.g., IAR) optimise out the byte-by-byte tail case
-     * where n is a constant multiple of 16.
-     * For other compilers (e.g. recent gcc and clang) it makes no difference if n is a compile-time
-     * constant, and is a very small perf regression if n is not a compile-time constant. */
-    if (n % 16 == 0) {
-        return;
-    }
-#endif
-#elif defined(MBEDTLS_ARCH_IS_X64) || defined(MBEDTLS_ARCH_IS_ARM64)
-    /* This codepath probably only makes sense on architectures with 64-bit registers */
-    for (; (i + 8) <= n; i += 8) {
-        uint64_t x = mbedtls_get_unaligned_uint64(a + i) ^ mbedtls_get_unaligned_uint64(b + i);
-        mbedtls_put_unaligned_uint64(r + i, x);
-    }
-#if defined(__IAR_SYSTEMS_ICC__)
-    if (n % 8 == 0) {
-        return;
-    }
-#endif
-#else
-    for (; (i + 4) <= n; i += 4) {
-        uint32_t x = mbedtls_get_unaligned_uint32(a + i) ^ mbedtls_get_unaligned_uint32(b + i);
-        mbedtls_put_unaligned_uint32(r + i, x);
-    }
-#if defined(__IAR_SYSTEMS_ICC__)
-    if (n % 4 == 0) {
-        return;
-    }
-#endif
-#endif
-#endif
-    for (; i < n; i++) {
-        r[i] = a[i] ^ b[i];
-    }
-}
+void mbedtls_xor(unsigned char *r, const unsigned char *a, const unsigned char *b, size_t n);
 
-/* Always inline mbedtls_xor_no_simd() as we see significant perf regressions when it does not get
- * inlined (e.g., observed about 3x perf difference in gcm_mult_largetable with gcc 7 - 12) */
-#if defined(__IAR_SYSTEMS_ICC__)
-#pragma inline = forced
-#elif defined(__GNUC__)
-__attribute__((always_inline))
-#endif
-/**
- * Perform a fast block XOR operation, such that
- * r[i] = a[i] ^ b[i] where 0 <= i < n
- *
- * In some situations, this can perform better than mbedtls_xor() (e.g., it's about 5%
- * better in AES-CBC).
- *
- * \param   r Pointer to result (buffer of at least \p n bytes). \p r
- *            may be equal to either \p a or \p b, but behaviour when
- *            it overlaps in other ways is undefined.
- * \param   a Pointer to input (buffer of at least \p n bytes)
- * \param   b Pointer to input (buffer of at least \p n bytes)
- * \param   n Number of bytes to process.
- *
- * \note      Depending on the situation, it may be faster to use either mbedtls_xor() or
- *            mbedtls_xor_no_simd() (these are functionally equivalent).
- *            If the result is used immediately after the xor operation in non-SIMD code (e.g, in
- *            AES-CBC), there may be additional latency to transfer the data from SIMD to scalar
- *            registers, and in this case, mbedtls_xor_no_simd() may be faster. In other cases where
- *            the result is not used immediately (e.g., in AES-CTR), mbedtls_xor() may be faster.
- *            For targets without SIMD support, they will behave the same.
- */
-static inline void mbedtls_xor_no_simd(unsigned char *r,
-                                       const unsigned char *a,
-                                       const unsigned char *b,
-                                       size_t n)
-{
-    size_t i = 0;
-#if defined(MBEDTLS_EFFICIENT_UNALIGNED_ACCESS)
-#if defined(MBEDTLS_ARCH_IS_X64) || defined(MBEDTLS_ARCH_IS_ARM64)
-    /* This codepath probably only makes sense on architectures with 64-bit registers */
-    for (; (i + 8) <= n; i += 8) {
-        uint64_t x = mbedtls_get_unaligned_uint64(a + i) ^ mbedtls_get_unaligned_uint64(b + i);
-        mbedtls_put_unaligned_uint64(r + i, x);
-    }
-#if defined(__IAR_SYSTEMS_ICC__)
-    /* This if statement helps some compilers (e.g., IAR) optimise out the byte-by-byte tail case
-     * where n is a constant multiple of 8.
-     * For other compilers (e.g. recent gcc and clang) it makes no difference if n is a compile-time
-     * constant, and is a very small perf regression if n is not a compile-time constant. */
-    if (n % 8 == 0) {
-        return;
-    }
-#endif
-#else
-    for (; (i + 4) <= n; i += 4) {
-        uint32_t x = mbedtls_get_unaligned_uint32(a + i) ^ mbedtls_get_unaligned_uint32(b + i);
-        mbedtls_put_unaligned_uint32(r + i, x);
-    }
-#if defined(__IAR_SYSTEMS_ICC__)
-    if (n % 4 == 0) {
-        return;
-    }
-#endif
-#endif
-#endif
-    for (; i < n; i++) {
-        r[i] = a[i] ^ b[i];
-    }
-}
+void mbedtls_xor_no_simd(unsigned char *r,
+                         const unsigned char *a,
+                         const unsigned char *b,
+                         size_t n);
 
 /* Fix MSVC C99 compatible issue
  *      MSVC support __func__ from visual studio 2015( 1900 )
@@ -352,19 +213,17 @@ static inline void mbedtls_xor_no_simd(unsigned char *r,
 #endif
 
 /* Always provide a static assert macro, so it can be used unconditionally.
- * It does nothing on systems where we don't know how to define a static assert.
- */
-/* Can't use the C11-style `defined(static_assert)` on FreeBSD, since it
+ * It will expand to nothing on some systems.
+ * Can be used outside functions (but don't add a trailing ';' in that case:
+ * the semicolon is included here to avoid triggering -Wextra-semi when
+ * MBEDTLS_STATIC_ASSERT() expands to nothing).
+ * Can't use the C11-style `defined(static_assert)` on FreeBSD, since it
  * defines static_assert even with -std=c99, but then complains about it.
  */
 #if defined(static_assert) && !defined(__FreeBSD__)
-#define MBEDTLS_STATIC_ASSERT(expr, msg)    static_assert(expr, msg)
+#define MBEDTLS_STATIC_ASSERT(expr, msg)    static_assert(expr, msg);
 #else
-/* Make sure `MBEDTLS_STATIC_ASSERT(expr, msg);` is valid both inside and
- * outside a function. We choose a struct declaration, which can be repeated
- * any number of times and does not need a matching definition. */
-#define MBEDTLS_STATIC_ASSERT(expr, msg)                                \
-    struct ISO_C_does_not_allow_extra_semicolon_outside_of_a_function
+#define MBEDTLS_STATIC_ASSERT(expr, msg)
 #endif
 
 #if defined(__has_builtin)
@@ -433,21 +292,5 @@ static inline void mbedtls_xor_no_simd(unsigned char *r,
 #if !defined(MBEDTLS_MAYBE_UNUSED)
 #    define MBEDTLS_MAYBE_UNUSED
 #endif
-
-/* GCC >= 15 has a warning 'unterminated-string-initialization' which complains if you initialize
- * a string into an array without space for a terminating NULL character. In some places in the
- * codebase this behaviour is intended, so we add the macro MBEDTLS_ATTRIBUTE_UNTERMINATED_STRING
- * to suppress the warning in these places.
- */
-#if defined(__has_attribute)
-#if __has_attribute(nonstring)
-#define MBEDTLS_HAS_ATTRIBUTE_NONSTRING
-#endif /* __has_attribute(nonstring) */
-#endif /* __has_attribute */
-#if defined(MBEDTLS_HAS_ATTRIBUTE_NONSTRING)
-#define MBEDTLS_ATTRIBUTE_UNTERMINATED_STRING __attribute__((nonstring))
-#else
-#define MBEDTLS_ATTRIBUTE_UNTERMINATED_STRING
-#endif /* MBEDTLS_HAS_ATTRIBUTE_NONSTRING */
 
 #endif /* MBEDTLS_LIBRARY_COMMON_H */

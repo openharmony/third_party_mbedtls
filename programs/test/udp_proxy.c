@@ -14,14 +14,15 @@
 
 #include "mbedtls/build_info.h"
 
-#include <stdlib.h>
 #if defined(MBEDTLS_PLATFORM_C)
 #include "mbedtls/platform.h"
 #else
 #include <stdio.h>
+#include <stdlib.h>
 #if defined(MBEDTLS_HAVE_TIME)
 #include <time.h>
 #define mbedtls_time            time
+#define mbedtls_time_t          time_t
 #endif
 #define mbedtls_printf          printf
 #define mbedtls_calloc          calloc
@@ -49,11 +50,6 @@ int main(void)
 /* For select() */
 #if (defined(_WIN32) || defined(_WIN32_WCE)) && !defined(EFIX64) && \
     !defined(EFI32)
-
-#if defined(_MSC_VER)
-#pragma warning(disable : 5105) // warning inside winbase.h in C11 mode
-#endif
-
 #include <winsock2.h>
 #include <windows.h>
 #if defined(_MSC_VER)
@@ -487,7 +483,7 @@ typedef struct {
 } packet;
 
 /* Print packet. Outgoing packets come with a reason (forward, dupl, etc.) */
-static void print_packet(const packet *p, const char *why)
+void print_packet(const packet *p, const char *why)
 {
 #if defined(MBEDTLS_TIMING_C)
     if (why == NULL) {
@@ -531,7 +527,7 @@ typedef enum {
 static inject_clihlo_state_t inject_clihlo_state;
 static packet initial_clihlo;
 
-static int send_packet(const packet *p, const char *why)
+int send_packet(const packet *p, const char *why)
 {
     int ret;
     mbedtls_net_context *dst = p->dst;
@@ -620,13 +616,13 @@ static int send_packet(const packet *p, const char *why)
 static size_t prev_len;
 static packet prev[MAX_DELAYED_MSG];
 
-static void clear_pending(void)
+void clear_pending(void)
 {
     memset(&prev, 0, sizeof(prev));
     prev_len = 0;
 }
 
-static void delay_packet(packet *delay)
+void delay_packet(packet *delay)
 {
     if (prev_len == MAX_DELAYED_MSG) {
         return;
@@ -635,7 +631,7 @@ static void delay_packet(packet *delay)
     memcpy(&prev[prev_len++], delay, sizeof(packet));
 }
 
-static int send_delayed(void)
+int send_delayed(void)
 {
     uint8_t offset;
     int ret;
@@ -667,9 +663,9 @@ static int send_delayed(void)
 static unsigned char held[2048] = { 0 };
 #define HOLD_MAX 2
 
-static int handle_message(const char *way,
-                          mbedtls_net_context *dst,
-                          mbedtls_net_context *src)
+int handle_message(const char *way,
+                   mbedtls_net_context *dst,
+                   mbedtls_net_context *src)
 {
     int ret;
     packet cur;
@@ -941,6 +937,8 @@ accept:
         }
 
     }
+
+    exit_code = MBEDTLS_EXIT_SUCCESS;
 
 exit:
 

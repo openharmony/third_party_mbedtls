@@ -71,8 +71,6 @@ int main(void)
 #define DFL_NBIO                0
 #define DFL_EVENT               0
 #define DFL_READ_TIMEOUT        0
-#define DFL_EXP_LABEL           NULL
-#define DFL_EXP_LEN             20
 #define DFL_CA_FILE             ""
 #define DFL_CA_PATH             ""
 #define DFL_CRT_FILE            ""
@@ -478,16 +476,6 @@ int main(void)
 #define USAGE_SERIALIZATION ""
 #endif
 
-#if defined(MBEDTLS_SSL_KEYING_MATERIAL_EXPORT)
-#define USAGE_EXPORT \
-    "    exp_label=%%s       Label to input into TLS-Exporter\n" \
-    "                         default: None (don't try to export a key)\n" \
-    "    exp_len=%%d         Length of key to extract from TLS-Exporter \n" \
-    "                         default: 20\n"
-#else
-#define USAGE_EXPORT ""
-#endif
-
 #define USAGE_KEY_OPAQUE_ALGS \
     "    key_opaque_algs=%%s  Allowed opaque key 1 algorithms.\n"                      \
     "                        comma-separated pair of values among the following:\n"    \
@@ -595,7 +583,6 @@ int main(void)
     "                                otherwise. The expansion of the macro\n" \
     "                                is printed if it is defined\n"           \
     USAGE_SERIALIZATION                                                       \
-    USAGE_EXPORT                                                              \
     "\n"
 
 #define PUT_UINT64_BE(out_be, in_le, i)                                   \
@@ -623,8 +610,6 @@ struct options {
     int nbio;                   /* should I/O be blocking?                  */
     int event;                  /* loop or event-driven IO? level or edge triggered? */
     uint32_t read_timeout;      /* timeout on mbedtls_ssl_read() in milliseconds    */
-    const char *exp_label;      /* label to input into mbedtls_ssl_export_keying_material() */
-    int exp_len;                /* Length of key to export using mbedtls_ssl_export_keying_material() */
     int response_size;          /* pad response with header to requested size */
     uint16_t buffer_size;       /* IO buffer size */
     const char *ca_file;        /* the file with the CA certificate(s)      */
@@ -771,7 +756,7 @@ struct _sni_entry {
     sni_entry *next;
 };
 
-static void sni_free(sni_entry *head)
+void sni_free(sni_entry *head)
 {
     sni_entry *cur = head, *next;
 
@@ -801,7 +786,7 @@ static void sni_free(sni_entry *head)
  *
  * Modifies the input string! This is not production quality!
  */
-static sni_entry *sni_parse(char *sni_string)
+sni_entry *sni_parse(char *sni_string)
 {
     sni_entry *cur = NULL, *new = NULL;
     char *p = sni_string;
@@ -893,8 +878,8 @@ error:
 /*
  * SNI callback.
  */
-static int sni_callback(void *p_info, mbedtls_ssl_context *ssl,
-                        const unsigned char *name, size_t name_len)
+int sni_callback(void *p_info, mbedtls_ssl_context *ssl,
+                 const unsigned char *name, size_t name_len)
 {
     const sni_entry *cur = (const sni_entry *) p_info;
 
@@ -924,7 +909,7 @@ static int sni_callback(void *p_info, mbedtls_ssl_context *ssl,
 /*
  * server certificate selection callback.
  */
-static int cert_callback(mbedtls_ssl_context *ssl)
+int cert_callback(mbedtls_ssl_context *ssl)
 {
     const sni_entry *cur = (sni_entry *) mbedtls_ssl_get_user_data_p(ssl);
     if (cur != NULL) {
@@ -969,7 +954,7 @@ struct _psk_entry {
 /*
  * Free a list of psk_entry's
  */
-static int psk_free(psk_entry *head)
+int psk_free(psk_entry *head)
 {
     psk_entry *next;
 
@@ -1000,7 +985,7 @@ static int psk_free(psk_entry *head)
  *
  * Modifies the input string! This is not production quality!
  */
-static psk_entry *psk_parse(char *psk_string)
+psk_entry *psk_parse(char *psk_string)
 {
     psk_entry *cur = NULL, *new = NULL;
     char *p = psk_string;
@@ -1042,8 +1027,8 @@ error:
 /*
  * PSK callback
  */
-static int psk_callback(void *p_info, mbedtls_ssl_context *ssl,
-                        const unsigned char *name, size_t name_len)
+int psk_callback(void *p_info, mbedtls_ssl_context *ssl,
+                 const unsigned char *name, size_t name_len)
 {
     psk_entry *cur = (psk_entry *) p_info;
 
@@ -1070,7 +1055,7 @@ static mbedtls_net_context listen_fd, client_fd;
 /* Interruption handler to ensure clean exit (for valgrind testing) */
 #if !defined(_WIN32)
 static int received_sigterm = 0;
-static void term_handler(int sig)
+void term_handler(int sig)
 {
     ((void) sig);
     received_sigterm = 1;
@@ -1120,11 +1105,11 @@ typedef struct {
     void *p_rng;
 } ssl_async_key_context_t;
 
-static int ssl_async_set_key(ssl_async_key_context_t *ctx,
-                             mbedtls_x509_crt *cert,
-                             mbedtls_pk_context *pk,
-                             int pk_take_ownership,
-                             unsigned delay)
+int ssl_async_set_key(ssl_async_key_context_t *ctx,
+                      mbedtls_x509_crt *cert,
+                      mbedtls_pk_context *pk,
+                      int pk_take_ownership,
+                      unsigned delay)
 {
     if (ctx->slots_used >= sizeof(ctx->slots) / sizeof(*ctx->slots)) {
         return -1;
@@ -1347,8 +1332,8 @@ static psa_status_t psa_setup_psk_key_slot(mbedtls_svc_key_id_t *slot,
 #endif /* MBEDTLS_USE_PSA_CRYPTO */
 
 #if defined(MBEDTLS_SSL_DTLS_CONNECTION_ID)
-static int report_cid_usage(mbedtls_ssl_context *ssl,
-                            const char *additional_description)
+int report_cid_usage(mbedtls_ssl_context *ssl,
+                     const char *additional_description)
 {
     int ret;
     unsigned char peer_cid[MBEDTLS_SSL_CID_OUT_LEN_MAX];
@@ -1391,17 +1376,16 @@ static int report_cid_usage(mbedtls_ssl_context *ssl,
 }
 #endif /* MBEDTLS_SSL_DTLS_CONNECTION_ID */
 
-#if defined(MBEDTLS_SSL_SESSION_TICKETS) && defined(MBEDTLS_SSL_TICKET_C) && \
-    defined(MBEDTLS_HAVE_TIME)
+#if defined(MBEDTLS_SSL_SESSION_TICKETS) && defined(MBEDTLS_HAVE_TIME)
 static inline void put_unaligned_uint32(void *p, uint32_t x)
 {
     memcpy(p, &x, sizeof(x));
 }
 
 /* Functions for session ticket tests */
-static int dummy_ticket_write(void *p_ticket, const mbedtls_ssl_session *session,
-                              unsigned char *start, const unsigned char *end,
-                              size_t *tlen, uint32_t *ticket_lifetime)
+int dummy_ticket_write(void *p_ticket, const mbedtls_ssl_session *session,
+                       unsigned char *start, const unsigned char *end,
+                       size_t *tlen, uint32_t *ticket_lifetime)
 {
     int ret;
     unsigned char *p = start;
@@ -1426,8 +1410,8 @@ static int dummy_ticket_write(void *p_ticket, const mbedtls_ssl_session *session
     return 0;
 }
 
-static int dummy_ticket_parse(void *p_ticket, mbedtls_ssl_session *session,
-                              unsigned char *buf, size_t len)
+int dummy_ticket_parse(void *p_ticket, mbedtls_ssl_session *session,
+                       unsigned char *buf, size_t len)
 {
     int ret;
     ((void) p_ticket);
@@ -1483,9 +1467,9 @@ static int dummy_ticket_parse(void *p_ticket, mbedtls_ssl_session *session,
 
     return ret;
 }
-#endif /* MBEDTLS_SSL_SESSION_TICKETS && MBEDTLS_SSL_TICKET_C && MBEDTLS_HAVE_TIME */
+#endif /* MBEDTLS_SSL_SESSION_TICKETS && MBEDTLS_HAVE_TIME */
 
-static int parse_cipher(char *buf)
+int parse_cipher(char *buf)
 {
     if (strcmp(buf, "AES-128-CCM")) {
         return MBEDTLS_CIPHER_AES_128_CCM;
@@ -1609,7 +1593,7 @@ int main(int argc, char *argv[])
     int i;
     char *p, *q;
     const int *list;
-#if defined(MBEDTLS_USE_PSA_CRYPTO)
+#if defined(MBEDTLS_USE_PSA_CRYPTO) || defined(MBEDTLS_SSL_PROTO_TLS1_3)
     psa_status_t status;
 #endif
     unsigned char eap_tls_keymaterial[16];
@@ -1675,15 +1659,7 @@ int main(int argc, char *argv[])
     mbedtls_ssl_cookie_init(&cookie_ctx);
 #endif
 
-    /* For builds with TLS 1.3 enabled but not MBEDTLS_USE_PSA_CRYPTO,
-     * we deliberately do not call psa_crypto_init() here, to test that
-     * the library is backward-compatible with versions prior to 3.6.0
-     * where calling psa_crypto_init() was not required to open a TLS
-     * connection in the default configuration. See
-     * https://github.com/Mbed-TLS/mbedtls/issues/9072 and
-     * mbedtls_ssl_tls13_crypto_init().
-     */
-#if defined(MBEDTLS_USE_PSA_CRYPTO)
+#if defined(MBEDTLS_USE_PSA_CRYPTO) || defined(MBEDTLS_SSL_PROTO_TLS1_3)
     status = psa_crypto_init();
     if (status != PSA_SUCCESS) {
         mbedtls_fprintf(stderr, "Failed to initialize PSA Crypto implementation: %d\n",
@@ -1714,8 +1690,6 @@ int main(int argc, char *argv[])
     opt.cid_val             = DFL_CID_VALUE;
     opt.cid_val_renego      = DFL_CID_VALUE_RENEGO;
     opt.read_timeout        = DFL_READ_TIMEOUT;
-    opt.exp_label           = DFL_EXP_LABEL;
-    opt.exp_len             = DFL_EXP_LEN;
     opt.ca_file             = DFL_CA_FILE;
     opt.ca_path             = DFL_CA_PATH;
     opt.crt_file            = DFL_CRT_FILE;
@@ -1894,10 +1868,6 @@ usage:
             }
         } else if (strcmp(p, "read_timeout") == 0) {
             opt.read_timeout = atoi(q);
-        } else if (strcmp(p, "exp_label") == 0) {
-            opt.exp_label = q;
-        } else if (strcmp(p, "exp_len") == 0) {
-            opt.exp_len = atoi(q);
         } else if (strcmp(p, "buffer_size") == 0) {
             opt.buffer_size = atoi(q);
             if (opt.buffer_size < 1) {
@@ -2716,7 +2686,7 @@ usage:
         }
         key_cert_init = 2;
 #endif /* MBEDTLS_RSA_C */
-#if defined(MBEDTLS_PK_CAN_ECDSA_SIGN)
+#if defined(MBEDTLS_PK_CAN_ECDSA_SOME)
         if ((ret = mbedtls_x509_crt_parse(&srvcert2,
                                           (const unsigned char *) mbedtls_test_srv_crt_ec,
                                           mbedtls_test_srv_crt_ec_len)) != 0) {
@@ -2733,7 +2703,7 @@ usage:
             goto exit;
         }
         key_cert_init2 = 2;
-#endif /* MBEDTLS_PK_CAN_ECDSA_SIGN */
+#endif /* MBEDTLS_PK_CAN_ECDSA_SOME */
     }
 
 #if defined(MBEDTLS_USE_PSA_CRYPTO)
@@ -3663,33 +3633,6 @@ handshake:
         mbedtls_printf("\n");
     }
 
-#if defined(MBEDTLS_SSL_KEYING_MATERIAL_EXPORT)
-    if (opt.exp_label != NULL && opt.exp_len > 0) {
-        unsigned char *exported_key = mbedtls_calloc((size_t) opt.exp_len, sizeof(unsigned char));
-        if (exported_key == NULL) {
-            mbedtls_printf("Could not allocate %d bytes\n", opt.exp_len);
-            ret = 3;
-            goto exit;
-        }
-        ret = mbedtls_ssl_export_keying_material(&ssl, exported_key, (size_t) opt.exp_len,
-                                                 opt.exp_label, strlen(opt.exp_label),
-                                                 NULL, 0, 0);
-        if (ret != 0) {
-            mbedtls_free(exported_key);
-            goto exit;
-        }
-        mbedtls_printf("Exporting key of length %d with label \"%s\": 0x",
-                       opt.exp_len,
-                       opt.exp_label);
-        for (i = 0; i < opt.exp_len; i++) {
-            mbedtls_printf("%02X", exported_key[i]);
-        }
-        mbedtls_printf("\n\n");
-        fflush(stdout);
-        mbedtls_free(exported_key);
-    }
-#endif /* defined(MBEDTLS_SSL_KEYING_MATERIAL_EXPORT) */
-
 #if defined(MBEDTLS_SSL_DTLS_SRTP)
     else if (opt.use_srtp != 0) {
         size_t j = 0;
@@ -4366,9 +4309,6 @@ exit:
 
     /* For builds with MBEDTLS_TEST_USE_PSA_CRYPTO_RNG psa crypto
      * resources are freed by rng_free(). */
-    /* For builds with MBEDTLS_SSL_PROTO_TLS1_3, PSA may have been
-     * initialized under the hood by the TLS layer. See
-     * mbedtls_ssl_tls13_crypto_init(). */
 #if (defined(MBEDTLS_USE_PSA_CRYPTO) || defined(MBEDTLS_SSL_PROTO_TLS1_3)) \
     && !defined(MBEDTLS_TEST_USE_PSA_CRYPTO_RNG)
     mbedtls_psa_crypto_free();

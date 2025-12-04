@@ -537,7 +537,7 @@ def main():
                             default=True)
         options = parser.parse_args()
         os.chdir(options.directory)
-        conf = config.MbedTLSConfig(options.config)
+        conf = config.ConfigFile(options.config)
         domain_data = DomainData(options, conf)
 
         if options.tasks is True:
