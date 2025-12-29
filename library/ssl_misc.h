@@ -11,10 +11,14 @@
 #define MBEDTLS_SSL_MISC_H
 
 #include "mbedtls/build_info.h"
+#include "common.h"
 
 #include "mbedtls/error.h"
 
 #include "mbedtls/ssl.h"
+#include "mbedtls/debug.h"
+#include "debug_internal.h"
+
 #include "mbedtls/cipher.h"
 
 #if defined(MBEDTLS_USE_PSA_CRYPTO) || defined(MBEDTLS_SSL_PROTO_TLS1_3)
@@ -47,7 +51,7 @@
 #include "ssl_ciphersuites_internal.h"
 #include "x509_internal.h"
 #include "pk_internal.h"
-#include "common.h"
+
 
 /* Shorthand for restartable ECC */
 #if defined(MBEDTLS_ECP_RESTARTABLE) && \
@@ -1162,14 +1166,15 @@ struct mbedtls_ssl_transform {
     unsigned char out_cid[MBEDTLS_SSL_CID_OUT_LEN_MAX];
 #endif /* MBEDTLS_SSL_DTLS_CONNECTION_ID */
 
-#if defined(MBEDTLS_SSL_CONTEXT_SERIALIZATION)
+#if defined(MBEDTLS_SSL_KEEP_RANDBYTES)
     /* We need the Hello random bytes in order to re-derive keys from the
-     * Master Secret and other session info,
-     * see ssl_tls12_populate_transform() */
+     * Master Secret and other session info and for the keying material
+     * exporter in TLS 1.2.
+     * See ssl_tls12_populate_transform() */
     unsigned char randbytes[MBEDTLS_SERVER_HELLO_RANDOM_LEN +
                             MBEDTLS_CLIENT_HELLO_RANDOM_LEN];
     /*!< ServerHello.random+ClientHello.random */
-#endif /* MBEDTLS_SSL_CONTEXT_SERIALIZATION */
+#endif /* defined(MBEDTLS_SSL_KEEP_RANDBYTES) */
 };
 
 /*
@@ -1332,10 +1337,28 @@ int mbedtls_ssl_handshake_client_step(mbedtls_ssl_context *ssl);
 MBEDTLS_CHECK_RETURN_CRITICAL
 int mbedtls_ssl_handshake_server_step(mbedtls_ssl_context *ssl);
 void mbedtls_ssl_handshake_wrapup(mbedtls_ssl_context *ssl);
+
+#if defined(MBEDTLS_DEBUG_C)
+/* Declared in "ssl_debug_helpers.h". We can't include this file from
+ * "ssl_misc.h" because it includes "ssl_misc.h" because it needs some
+ * type definitions. TODO: split the type definitions and the helper
+ * functions into different headers.
+ */
+const char *mbedtls_ssl_states_str(mbedtls_ssl_states state);
+#endif
+
 static inline void mbedtls_ssl_handshake_set_state(mbedtls_ssl_context *ssl,
                                                    mbedtls_ssl_states state)
 {
+    MBEDTLS_SSL_DEBUG_MSG(3, ("handshake state: %d (%s) -> %d (%s)",
+                              ssl->state, mbedtls_ssl_states_str(ssl->state),
+                              (int) state, mbedtls_ssl_states_str(state)));
     ssl->state = (int) state;
+}
+
+static inline void mbedtls_ssl_handshake_increment_state(mbedtls_ssl_context *ssl)
+{
+    mbedtls_ssl_handshake_set_state(ssl, ssl->state + 1);
 }
 
 MBEDTLS_CHECK_RETURN_CRITICAL
@@ -1507,7 +1530,7 @@ int mbedtls_ssl_psk_derive_premaster(mbedtls_ssl_context *ssl,
 #endif /* MBEDTLS_KEY_EXCHANGE_SOME_PSK_ENABLED */
 
 #if defined(MBEDTLS_SSL_HANDSHAKE_WITH_PSK_ENABLED)
-#if defined(MBEDTLS_SSL_CLI_C)
+#if defined(MBEDTLS_SSL_CLI_C) || defined(MBEDTLS_SSL_SRV_C)
 MBEDTLS_CHECK_RETURN_CRITICAL
 int mbedtls_ssl_conf_has_static_psk(mbedtls_ssl_config const *conf);
 #endif
@@ -1533,7 +1556,6 @@ static inline mbedtls_svc_key_id_t mbedtls_ssl_get_opaque_psk(
     return MBEDTLS_SVC_KEY_ID_INIT;
 }
 #else
-
 /**
  * Get the first defined PSK by order of precedence:
  * 1. handshake PSK set by \c mbedtls_ssl_set_hs_psk() in the PSK callback
@@ -1543,14 +1565,12 @@ static inline mbedtls_svc_key_id_t mbedtls_ssl_get_opaque_psk(
 static inline int mbedtls_ssl_get_psk(const mbedtls_ssl_context *ssl,
                                       const unsigned char **psk, size_t *psk_len)
 {
-    if (ssl->MBEDTLS_PRIVATE(handshake)->psk != NULL && ssl->MBEDTLS_PRIVATE(handshake)->psk_len > 0)
-    {
-        *psk = ssl->MBEDTLS_PRIVATE(handshake)->psk;
-        *psk_len = ssl->MBEDTLS_PRIVATE(handshake)->psk_len;
-    } else if (ssl->MBEDTLS_PRIVATE(conf)->MBEDTLS_PRIVATE(psk) != NULL &&
-               ssl->MBEDTLS_PRIVATE(conf)->MBEDTLS_PRIVATE(psk_len) > 0) {
-        *psk = ssl->MBEDTLS_PRIVATE(conf)->MBEDTLS_PRIVATE(psk);
-        *psk_len = ssl->MBEDTLS_PRIVATE(conf)->MBEDTLS_PRIVATE(psk_len);
+    if (ssl->handshake->psk != NULL && ssl->handshake->psk_len > 0) {
+        *psk = ssl->handshake->psk;
+        *psk_len = ssl->handshake->psk_len;
+    } else if (ssl->conf->psk != NULL && ssl->conf->psk_len > 0) {
+        *psk = ssl->conf->psk;
+        *psk_len = ssl->conf->psk_len;
     } else {
         *psk = NULL;
         *psk_len = 0;
@@ -1654,10 +1674,10 @@ static inline mbedtls_pk_context *mbedtls_ssl_own_key(mbedtls_ssl_context *ssl)
 {
     mbedtls_ssl_key_cert *key_cert;
 
-    if (ssl->MBEDTLS_PRIVATE(handshake) != NULL && ssl->MBEDTLS_PRIVATE(handshake)->key_cert != NULL) {
-        key_cert = ssl->MBEDTLS_PRIVATE(handshake)->key_cert;
+    if (ssl->handshake != NULL && ssl->handshake->key_cert != NULL) {
+        key_cert = ssl->handshake->key_cert;
     } else {
-        key_cert = ssl->MBEDTLS_PRIVATE(conf)->MBEDTLS_PRIVATE(key_cert);
+        key_cert = ssl->conf->key_cert;
     }
 
     return key_cert == NULL ? NULL : key_cert->key;
@@ -1667,10 +1687,10 @@ static inline mbedtls_x509_crt *mbedtls_ssl_own_cert(mbedtls_ssl_context *ssl)
 {
     mbedtls_ssl_key_cert *key_cert;
 
-    if (ssl->MBEDTLS_PRIVATE(handshake) != NULL && ssl->MBEDTLS_PRIVATE(handshake)->key_cert != NULL) {
-        key_cert = ssl->MBEDTLS_PRIVATE(handshake)->key_cert;
+    if (ssl->handshake != NULL && ssl->handshake->key_cert != NULL) {
+        key_cert = ssl->handshake->key_cert;
     } else {
-        key_cert = ssl->MBEDTLS_PRIVATE(conf)->MBEDTLS_PRIVATE(key_cert);
+        key_cert = ssl->conf->key_cert;
     }
 
     return key_cert == NULL ? NULL : key_cert->cert;
@@ -1739,7 +1759,7 @@ static inline size_t mbedtls_ssl_in_hdr_len(const mbedtls_ssl_context *ssl)
 #endif
 
 #if defined(MBEDTLS_SSL_PROTO_DTLS)
-    if (ssl->MBEDTLS_PRIVATE(conf)->MBEDTLS_PRIVATE(transport) == MBEDTLS_SSL_TRANSPORT_DATAGRAM) {
+    if (ssl->conf->transport == MBEDTLS_SSL_TRANSPORT_DATAGRAM) {
         return 13;
     } else
 #endif /* MBEDTLS_SSL_PROTO_DTLS */
@@ -1750,13 +1770,13 @@ static inline size_t mbedtls_ssl_in_hdr_len(const mbedtls_ssl_context *ssl)
 
 static inline size_t mbedtls_ssl_out_hdr_len(const mbedtls_ssl_context *ssl)
 {
-    return (size_t) (ssl->MBEDTLS_PRIVATE(out_iv) - ssl->MBEDTLS_PRIVATE(out_hdr));
+    return (size_t) (ssl->out_iv - ssl->out_hdr);
 }
 
 static inline size_t mbedtls_ssl_hs_hdr_len(const mbedtls_ssl_context *ssl)
 {
 #if defined(MBEDTLS_SSL_PROTO_DTLS)
-    if(ssl->MBEDTLS_PRIVATE(conf)->MBEDTLS_PRIVATE(transport) == MBEDTLS_SSL_TRANSPORT_DATAGRAM) {
+    if (ssl->conf->transport == MBEDTLS_SSL_TRANSPORT_DATAGRAM) {
         return 12;
     }
 #else
@@ -1814,7 +1834,7 @@ int mbedtls_ssl_decrypt_buf(mbedtls_ssl_context const *ssl,
 static inline size_t mbedtls_ssl_ep_len(const mbedtls_ssl_context *ssl)
 {
 #if defined(MBEDTLS_SSL_PROTO_DTLS)
-    if (ssl->MBEDTLS_PRIVATE(conf)->MBEDTLS_PRIVATE(transport) == MBEDTLS_SSL_TRANSPORT_DATAGRAM) {
+    if (ssl->conf->transport == MBEDTLS_SSL_TRANSPORT_DATAGRAM) {
         return 2;
     }
 #else
@@ -1832,10 +1852,11 @@ void mbedtls_ssl_set_timer(mbedtls_ssl_context *ssl, uint32_t millisecs);
 MBEDTLS_CHECK_RETURN_CRITICAL
 int mbedtls_ssl_check_timer(mbedtls_ssl_context *ssl);
 
-void mbedtls_ssl_reset_in_out_pointers(mbedtls_ssl_context *ssl);
+void mbedtls_ssl_reset_in_pointers(mbedtls_ssl_context *ssl);
+void mbedtls_ssl_update_in_pointers(mbedtls_ssl_context *ssl);
+void mbedtls_ssl_reset_out_pointers(mbedtls_ssl_context *ssl);
 void mbedtls_ssl_update_out_pointers(mbedtls_ssl_context *ssl,
                                      mbedtls_ssl_transform *transform);
-void mbedtls_ssl_update_in_pointers(mbedtls_ssl_context *ssl);
 
 MBEDTLS_CHECK_RETURN_CRITICAL
 int mbedtls_ssl_session_reset_int(mbedtls_ssl_context *ssl, int partial);
@@ -1883,24 +1904,26 @@ void mbedtls_ssl_flight_free(mbedtls_ssl_flight_item *flight);
 #if defined(MBEDTLS_SSL_PROTO_TLS1_3)
 static inline int mbedtls_ssl_conf_is_tls13_only(const mbedtls_ssl_config *conf)
 {
-    return conf->MBEDTLS_PRIVATE(min_tls_version) == MBEDTLS_SSL_VERSION_TLS1_3 &&
-           conf->MBEDTLS_PRIVATE(max_tls_version) == MBEDTLS_SSL_VERSION_TLS1_3;    
+    return conf->min_tls_version == MBEDTLS_SSL_VERSION_TLS1_3 &&
+           conf->max_tls_version == MBEDTLS_SSL_VERSION_TLS1_3;
 }
+
 #endif /* MBEDTLS_SSL_PROTO_TLS1_3 */
 
 #if defined(MBEDTLS_SSL_PROTO_TLS1_2)
 static inline int mbedtls_ssl_conf_is_tls12_only(const mbedtls_ssl_config *conf)
 {
-    return conf->MBEDTLS_PRIVATE(min_tls_version) == MBEDTLS_SSL_VERSION_TLS1_2 &&
-           conf->MBEDTLS_PRIVATE(max_tls_version) == MBEDTLS_SSL_VERSION_TLS1_2;    
+    return conf->min_tls_version == MBEDTLS_SSL_VERSION_TLS1_2 &&
+           conf->max_tls_version == MBEDTLS_SSL_VERSION_TLS1_2;
 }
+
 #endif /* MBEDTLS_SSL_PROTO_TLS1_2 */
 
 static inline int mbedtls_ssl_conf_is_tls13_enabled(const mbedtls_ssl_config *conf)
 {
 #if defined(MBEDTLS_SSL_PROTO_TLS1_3)
-    return conf->MBEDTLS_PRIVATE(min_tls_version) <= MBEDTLS_SSL_VERSION_TLS1_3 &&
-           conf->MBEDTLS_PRIVATE(max_tls_version) >= MBEDTLS_SSL_VERSION_TLS1_3;
+    return conf->min_tls_version <= MBEDTLS_SSL_VERSION_TLS1_3 &&
+           conf->max_tls_version >= MBEDTLS_SSL_VERSION_TLS1_3;
 #else
     ((void) conf);
     return 0;
@@ -1910,8 +1933,8 @@ static inline int mbedtls_ssl_conf_is_tls13_enabled(const mbedtls_ssl_config *co
 static inline int mbedtls_ssl_conf_is_tls12_enabled(const mbedtls_ssl_config *conf)
 {
 #if defined(MBEDTLS_SSL_PROTO_TLS1_2)
-    return conf->MBEDTLS_PRIVATE(min_tls_version) <= MBEDTLS_SSL_VERSION_TLS1_2 &&
-           conf->MBEDTLS_PRIVATE(max_tls_version) >= MBEDTLS_SSL_VERSION_TLS1_2;
+    return conf->min_tls_version <= MBEDTLS_SSL_VERSION_TLS1_2 &&
+           conf->max_tls_version >= MBEDTLS_SSL_VERSION_TLS1_2;
 #else
     ((void) conf);
     return 0;
@@ -1921,12 +1944,32 @@ static inline int mbedtls_ssl_conf_is_tls12_enabled(const mbedtls_ssl_config *co
 #if defined(MBEDTLS_SSL_PROTO_TLS1_2) && defined(MBEDTLS_SSL_PROTO_TLS1_3)
 static inline int mbedtls_ssl_conf_is_hybrid_tls12_tls13(const mbedtls_ssl_config *conf)
 {
-    return conf->MBEDTLS_PRIVATE(min_tls_version) == MBEDTLS_SSL_VERSION_TLS1_2 &&
-           conf->MBEDTLS_PRIVATE(max_tls_version) == MBEDTLS_SSL_VERSION_TLS1_3;    
+    return conf->min_tls_version == MBEDTLS_SSL_VERSION_TLS1_2 &&
+           conf->max_tls_version == MBEDTLS_SSL_VERSION_TLS1_3;
 }
 #endif /* MBEDTLS_SSL_PROTO_TLS1_2 && MBEDTLS_SSL_PROTO_TLS1_3 */
 
 #if defined(MBEDTLS_SSL_PROTO_TLS1_3)
+
+/** \brief Initialize the PSA crypto subsystem if necessary.
+ *
+ * Call this function before doing any cryptography in a TLS 1.3 handshake.
+ *
+ * This is necessary in Mbed TLS 3.x for backward compatibility.
+ * Up to Mbed TLS 3.5, in the default configuration, you could perform
+ * a TLS connection with default parameters without having called
+ * psa_crypto_init(), since the TLS layer only supported TLS 1.2 and
+ * did not use PSA crypto. (TLS 1.2 only uses PSA crypto if
+ * MBEDTLS_USE_PSA_CRYPTO is enabled, which is not the case in the default
+ * configuration.) Starting with Mbed TLS 3.6.0, TLS 1.3 is enabled
+ * by default, and the TLS 1.3 layer uses PSA crypto. This means that
+ * applications that are not otherwise using PSA crypto and that worked
+ * with Mbed TLS 3.5 started failing in TLS 3.6.0 if they connected to
+ * a peer that supports TLS 1.3. See
+ * https://github.com/Mbed-TLS/mbedtls/issues/9072
+ */
+int mbedtls_ssl_tls13_crypto_init(mbedtls_ssl_context *ssl);
+
 extern const uint8_t mbedtls_ssl_tls13_hello_retry_request_magic[
     MBEDTLS_SERVER_HELLO_RANDOM_LEN];
 MBEDTLS_CHECK_RETURN_CRITICAL
@@ -2282,12 +2325,12 @@ int mbedtls_ssl_get_handshake_transcript(mbedtls_ssl_context *ssl,
 static inline const void *mbedtls_ssl_get_groups(const mbedtls_ssl_context *ssl)
 {
     #if defined(MBEDTLS_DEPRECATED_REMOVED) || !defined(MBEDTLS_ECP_C)
-    return ssl->MBEDTLS_PRIVATE(conf)->MBEDTLS_PRIVATE(group_list);
+    return ssl->conf->group_list;
     #else
-    if ((ssl->MBEDTLS_PRIVATE(handshake) != NULL) && (ssl->MBEDTLS_PRIVATE(handshake)->group_list != NULL)) {
-        return ssl->MBEDTLS_PRIVATE(handshake)->group_list;
+    if ((ssl->handshake != NULL) && (ssl->handshake->group_list != NULL)) {
+        return ssl->handshake->group_list;
     } else {
-        return ssl->MBEDTLS_PRIVATE(conf)->MBEDTLS_PRIVATE(group_list);
+        return ssl->conf->group_list;
     }
     #endif
 }
@@ -2388,13 +2431,13 @@ static inline const void *mbedtls_ssl_get_sig_algs(
 #if defined(MBEDTLS_SSL_HANDSHAKE_WITH_CERT_ENABLED)
 
 #if !defined(MBEDTLS_DEPRECATED_REMOVED)
-    if (ssl->MBEDTLS_PRIVATE(handshake) != NULL &&
-        ssl->MBEDTLS_PRIVATE(handshake)->sig_algs_heap_allocated == 1 &&
-        ssl->MBEDTLS_PRIVATE(handshake)->sig_algs != NULL) {
-        return ssl->MBEDTLS_PRIVATE(handshake)->sig_algs;
+    if (ssl->handshake != NULL &&
+        ssl->handshake->sig_algs_heap_allocated == 1 &&
+        ssl->handshake->sig_algs != NULL) {
+        return ssl->handshake->sig_algs;
     }
 #endif
-    return ssl->MBEDTLS_PRIVATE(conf)->MBEDTLS_PRIVATE(sig_algs);
+    return ssl->conf->sig_algs;
 
 #else /* MBEDTLS_SSL_HANDSHAKE_WITH_CERT_ENABLED */
 
@@ -2407,7 +2450,7 @@ static inline const void *mbedtls_ssl_get_sig_algs(
 static inline int mbedtls_ssl_sig_alg_is_received(const mbedtls_ssl_context *ssl,
                                                   uint16_t own_sig_alg)
 {
-    const uint16_t *sig_alg = ssl->MBEDTLS_PRIVATE(handshake)->MBEDTLS_PRIVATE(received_sig_algs);
+    const uint16_t *sig_alg = ssl->handshake->received_sig_algs;
     if (sig_alg == NULL) {
         return 0;
     }
@@ -2612,13 +2655,13 @@ static inline int mbedtls_ssl_sig_alg_is_supported(
 {
 
 #if defined(MBEDTLS_SSL_PROTO_TLS1_2)
-    if (ssl->MBEDTLS_PRIVATE(tls_version) == MBEDTLS_SSL_VERSION_TLS1_2) {
+    if (ssl->tls_version == MBEDTLS_SSL_VERSION_TLS1_2) {
         return mbedtls_ssl_tls12_sig_alg_is_supported(sig_alg);
     }
 #endif /* MBEDTLS_SSL_PROTO_TLS1_2 */
 
 #if defined(MBEDTLS_SSL_TLS1_3_KEY_EXCHANGE_MODE_EPHEMERAL_ENABLED)
-    if (ssl->MBEDTLS_PRIVATE(tls_version) == MBEDTLS_SSL_VERSION_TLS1_3) {
+    if (ssl->tls_version == MBEDTLS_SSL_VERSION_TLS1_3) {
         return mbedtls_ssl_tls13_sig_alg_is_supported(sig_alg);
     }
 #endif
@@ -2771,7 +2814,7 @@ int mbedtls_ssl_tls13_read_public_xxdhe_share(mbedtls_ssl_context *ssl,
 static inline int mbedtls_ssl_tls13_cipher_suite_is_offered(
     mbedtls_ssl_context *ssl, int cipher_suite)
 {
-    const int *ciphersuite_list = ssl->MBEDTLS_PRIVATE(conf)->MBEDTLS_PRIVATE(ciphersuite_list);
+    const int *ciphersuite_list = ssl->conf->ciphersuite_list;
 
     /* Check whether we have offered this ciphersuite */
     for (size_t i = 0; ciphersuite_list[i] != 0; i++) {
@@ -2962,7 +3005,38 @@ static inline void mbedtls_ssl_tls13_session_clear_ticket_flags(
 {
     session->ticket_flags &= ~(flags & MBEDTLS_SSL_TLS1_3_TICKET_FLAGS_MASK);
 }
+
 #endif /* MBEDTLS_SSL_PROTO_TLS1_3 && MBEDTLS_SSL_SESSION_TICKETS */
+
+#if defined(MBEDTLS_SSL_SESSION_TICKETS) && defined(MBEDTLS_SSL_CLI_C)
+#define MBEDTLS_SSL_SESSION_TICKETS_TLS1_2_BIT 0
+#define MBEDTLS_SSL_SESSION_TICKETS_TLS1_3_BIT 1
+
+#define MBEDTLS_SSL_SESSION_TICKETS_TLS1_2_MASK \
+    (1 << MBEDTLS_SSL_SESSION_TICKETS_TLS1_2_BIT)
+#define MBEDTLS_SSL_SESSION_TICKETS_TLS1_3_MASK \
+    (1 << MBEDTLS_SSL_SESSION_TICKETS_TLS1_3_BIT)
+
+#if defined(MBEDTLS_SSL_PROTO_TLS1_2)
+static inline int mbedtls_ssl_conf_get_session_tickets(
+    const mbedtls_ssl_config *conf)
+{
+    return conf->session_tickets & MBEDTLS_SSL_SESSION_TICKETS_TLS1_2_MASK ?
+           MBEDTLS_SSL_SESSION_TICKETS_ENABLED :
+           MBEDTLS_SSL_SESSION_TICKETS_DISABLED;
+}
+#endif /* MBEDTLS_SSL_PROTO_TLS1_2 */
+
+#if defined(MBEDTLS_SSL_PROTO_TLS1_3)
+static inline int mbedtls_ssl_conf_is_signal_new_session_tickets_enabled(
+    const mbedtls_ssl_config *conf)
+{
+    return conf->session_tickets & MBEDTLS_SSL_SESSION_TICKETS_TLS1_3_MASK ?
+           MBEDTLS_SSL_TLS1_3_SIGNAL_NEW_SESSION_TICKETS_ENABLED :
+           MBEDTLS_SSL_TLS1_3_SIGNAL_NEW_SESSION_TICKETS_DISABLED;
+}
+#endif /* MBEDTLS_SSL_PROTO_TLS1_3 */
+#endif /* MBEDTLS_SSL_SESSION_TICKETS && MBEDTLS_SSL_CLI_C */
 
 #if defined(MBEDTLS_SSL_CLI_C) && defined(MBEDTLS_SSL_PROTO_TLS1_3)
 int mbedtls_ssl_tls13_finalize_client_hello(mbedtls_ssl_context *ssl);
