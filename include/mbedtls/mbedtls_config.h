@@ -149,7 +149,7 @@
  * mbedtls_platform_gmtime_r() at compile-time by using the macro
  * MBEDTLS_PLATFORM_GMTIME_R_ALT.
  */
-#define MBEDTLS_HAVE_TIME_DATE
+//#define MBEDTLS_HAVE_TIME_DATE
 
 /**
  * \def MBEDTLS_PLATFORM_MEMORY
@@ -4225,6 +4225,8 @@
 //#define MBEDTLS_SSL_CACHE_DEFAULT_TIMEOUT       86400 /**< 1 day  */
 //#define MBEDTLS_SSL_CACHE_DEFAULT_MAX_ENTRIES      50 /**< Maximum entries in cache */
 
+/* SSL options */
+
 /** \def MBEDTLS_SSL_MAX_CONTENT_LEN 
   * 
   * Maximum length (in bytes) of incoming and outgoing plaintext fragments. 
@@ -4250,8 +4252,6 @@
   * incoming and outgoing I/O buffers. 
   */ 
  #define MBEDTLS_SSL_MAX_CONTENT_LEN             16384
-
-/* SSL options */
 
 /** \def MBEDTLS_SSL_IN_CONTENT_LEN
  *
