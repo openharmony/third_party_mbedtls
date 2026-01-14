@@ -121,7 +121,6 @@ int mbedtls_x509_get_alg(unsigned char **p, const unsigned char *end,
     return 0;
 }
 
-#if defined(MBEDTLS_X509_RSASSA_PSS_SUPPORT)
 /*
  * Convert md type to string
  */
@@ -166,6 +165,8 @@ static inline const char *md_type_to_string(mbedtls_md_type_t md_alg)
 }
 
 #endif /* !defined(MBEDTLS_X509_REMOVE_INFO) && defined(MBEDTLS_X509_RSASSA_PSS_SUPPORT) */
+
+#if defined(MBEDTLS_X509_RSASSA_PSS_SUPPORT)
 /*
  * HashAlgorithm ::= AlgorithmIdentifier
  *

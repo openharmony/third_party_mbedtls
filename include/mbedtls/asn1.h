@@ -608,7 +608,7 @@ const mbedtls_asn1_named_data *mbedtls_asn1_find_named_data(const mbedtls_asn1_n
  *              This function calls mbedtls_free() on
  *              `entry->oid.p` and `entry->val.p`.
  */
-void mbedtls_asn1_free_named_data(mbedtls_asn1_named_data *entry);
+void MBEDTLS_DEPRECATED mbedtls_asn1_free_named_data(mbedtls_asn1_named_data *entry);
 #endif /* MBEDTLS_DEPRECATED_REMOVED */
 
 /**
