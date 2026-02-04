@@ -131,6 +131,7 @@ if (defined(ohos_lite)) {
   import("//build/ohos.gni")
   config("mbedtls_config") {
     include_dirs = MBEDTLS_INLCUDE_DIRS
+    include_dirs += [ "//third_party/bounds_checking_function/include" ]
   }
 
   ohos_shared_library("mbedtls_shared") {
@@ -140,7 +141,6 @@ if (defined(ohos_lite)) {
         "MBEDTLS_SSL_SRV_C",
       ]
     }
-
     branch_protector_ret = "pac_ret"
     public_configs = [ ":mbedtls_config" ]
     output_name = "mbedtls"
@@ -151,21 +151,12 @@ if (defined(ohos_lite)) {
       "platformsdk_indirect",
       "sasdk",
     ]
-    external_deps = [ "bounds_checking_function:libsec_static" ]
     part_name = "mbedtls"
     sources = MBEDTLS_SOURCES
     install_images = [
       "system",
       "updater",
     ]
-  }
-
-  ohos_static_library("mbedtls_static") {
-    sources = MBEDTLS_SOURCES
-    public_configs = [ ":mbedtls_config" ]
-    external_deps = [ "bounds_checking_function:libsec_static" ]
-    part_name = "mbedtls"
-    subsystem_name = "thirdparty"
   }
 
   group("mbedtls") {
