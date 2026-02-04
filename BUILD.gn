@@ -168,7 +168,6 @@ ohos_static_library("mbedtls_static") {
     subsystem_name = "thirdparty"
   }
 
-
   group("mbedtls") {
     public_deps = [ ":mbedtls_shared" ]
   }
