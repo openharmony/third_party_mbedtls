@@ -56,6 +56,7 @@
 				<filteritem type="filename" name="*.fmt" desc="Test file, not license statement."/>
 				<filteritem type="filename" name="hash_file*" desc="Test file, not license statement."/>
 				<filteritem type="filename" name="test_suite_bignum_random.function" desc="Test file, not license statement."/>
+                <filteritem type="filepath" name="tests/.*" desc="Test file, not license statement."/>
             </filefilter>
         </filefilterlist>
     </oatconfig>
