@@ -153,6 +153,18 @@ if (product_name == "generic_m55_arm_32_bes_aurora_wear_mini_application") {
 } else if (product_name ==
            "generic_m55_arm_32_bes_phoinix_wear_mini_application") {
   MBEDTLS_INLCUDE_DIRS += [ "$MBEDTLSDIR/port/config/compat_lwip" ]
+ } else if (product_name == 
+           "generic_m55_arm_32_bes_jana_wear_mini_application") { 
+   MBEDTLS_INLCUDE_DIRS += [ "$MBEDTLSDIR/port/config/compat_lwip" ] 
+ }else if (product_name == 
+           "generic_m55_arm_32_bes_janapro_wear_mini_application") { 
+   MBEDTLS_INLCUDE_DIRS += [ "$MBEDTLSDIR/port/config/compat_lwip" ] 
+ }else if (product_name == 
+           "generic_m55_arm_32_bes_vili_wear_mini_application") { 
+   MBEDTLS_INLCUDE_DIRS += [ "$MBEDTLSDIR/port/config/compat_lwip" ] 
+ }else if (product_name == 
+           "generic_m55_arm_32_bes_vilipro_wear_mini_application") { 
+   MBEDTLS_INLCUDE_DIRS += [ "$MBEDTLSDIR/port/config/compat_lwip" ]
 } else {
   MBEDTLS_INLCUDE_DIRS += [ "$MBEDTLSDIR/port/config/compat_posix" ]
 }
