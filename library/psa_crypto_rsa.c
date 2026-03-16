@@ -239,7 +239,7 @@ static psa_status_t psa_rsa_read_exponent(const uint8_t *e_bytes,
 
 psa_status_t mbedtls_psa_rsa_generate_key(
     const psa_key_attributes_t *attributes,
-    const psa_key_production_parameters_t *params, size_t params_data_length,
+    const uint8_t *custom_data, size_t custom_data_length,
     uint8_t *key_buffer, size_t key_buffer_size, size_t *key_buffer_length)
 {
     psa_status_t status;
@@ -247,8 +247,8 @@ psa_status_t mbedtls_psa_rsa_generate_key(
     int ret = MBEDTLS_ERR_ERROR_CORRUPTION_DETECTED;
     int exponent = 65537;
 
-    if (params_data_length != 0) {
-        status = psa_rsa_read_exponent(params->data, params_data_length,
+    if (custom_data_length != 0) {
+        status = psa_rsa_read_exponent(custom_data, custom_data_length,
                                        &exponent);
         if (status != PSA_SUCCESS) {
             return status;
@@ -295,7 +295,7 @@ static psa_status_t psa_rsa_decode_md_type(psa_algorithm_t alg,
      * parameters. Validate that it fits so that we don't risk an
      * overflow later. */
 #if SIZE_MAX > UINT_MAX
-    if ((int)hash_length > (int)UINT_MAX) {
+    if (hash_length > UINT_MAX) {
         return PSA_ERROR_INVALID_ARGUMENT;
     }
 #endif

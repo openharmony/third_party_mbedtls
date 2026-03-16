@@ -2,19 +2,7 @@
  *  Test dynamic loading of libmbed*
  *
  *  Copyright The Mbed TLS Contributors
- *  SPDX-License-Identifier: Apache-2.0
- *
- *  Licensed under the Apache License, Version 2.0 (the "License"); you may
- *  not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
- *
- *  http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- *  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
+ *  SPDX-License-Identifier: Apache-2.0 OR GPL-2.0-or-later
  */
 
 #include "mbedtls/build_info.h"
@@ -59,8 +47,15 @@ int main(void)
 #if defined(MBEDTLS_SSL_TLS_C)
     void *tls_so = dlopen(TLS_SO_FILENAME, RTLD_NOW);
     CHECK_DLERROR("dlopen", TLS_SO_FILENAME);
+#pragma GCC diagnostic push
+    /* dlsym() returns an object pointer which is meant to be used as a
+     * function pointer. This has undefined behavior in standard C, so
+     * "gcc -std=c99 -pedantic" complains about it, but it is perfectly
+     * fine on platforms that have dlsym(). */
+#pragma GCC diagnostic ignored "-Wpedantic"
     const int *(*ssl_list_ciphersuites)(void) =
         dlsym(tls_so, "mbedtls_ssl_list_ciphersuites");
+#pragma GCC diagnostic pop
     CHECK_DLERROR("dlsym", "mbedtls_ssl_list_ciphersuites");
     const int *ciphersuites = ssl_list_ciphersuites();
     for (n = 0; ciphersuites[n] != 0; n++) {/* nothing to do, we're just counting */
@@ -87,8 +82,15 @@ int main(void)
 #if defined(MBEDTLS_MD_C)
     void *crypto_so = dlopen(CRYPTO_SO_FILENAME, RTLD_NOW);
     CHECK_DLERROR("dlopen", CRYPTO_SO_FILENAME);
+#pragma GCC diagnostic push
+    /* dlsym() returns an object pointer which is meant to be used as a
+     * function pointer. This has undefined behavior in standard C, so
+     * "gcc -std=c99 -pedantic" complains about it, but it is perfectly
+     * fine on platforms that have dlsym(). */
+#pragma GCC diagnostic ignored "-Wpedantic"
     const int *(*md_list)(void) =
         dlsym(crypto_so, "mbedtls_md_list");
+#pragma GCC diagnostic pop
     CHECK_DLERROR("dlsym", "mbedtls_md_list");
     const int *mds = md_list();
     for (n = 0; mds[n] != 0; n++) {/* nothing to do, we're just counting */
