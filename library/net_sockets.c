@@ -93,11 +93,6 @@ static int wsa_init_done = 0;
 
 #include <stdint.h>
 
-#include "socket_compat.h"
-#ifdef USE_LWIP
-#include "lwip/sockets.h"
-#endif
-
 /*
  * Prepare for using the sockets interface
  */
@@ -183,17 +178,9 @@ int mbedtls_net_connect(mbedtls_net_context *ctx, const char *host,
     /* Try the sockaddrs until a connection succeeds */
     ret = MBEDTLS_ERR_NET_UNKNOWN_HOST;
     for (cur = addr_list; cur != NULL; cur = cur->ai_next) {
-#ifdef LITEOS_VERSION
-        if (cur->ai_family != AF_INET || cur->ai_socktype != SOCK_STREAM) {
-            continue;
-        }
-        ctx->fd = (int) socket(AF_INET, SOCK_STREAM, 0);
-#else
         ctx->fd = (int) socket(cur->ai_family, cur->ai_socktype,
                                cur->ai_protocol);
-#endif
-        if(ctx->fd < 0)
-        {
+        if (ctx->fd < 0) {
             ret = MBEDTLS_ERR_NET_SOCKET_FAILED;
             continue;
         }
@@ -203,11 +190,7 @@ int mbedtls_net_connect(mbedtls_net_context *ctx, const char *host,
             break;
         }
 
-#ifdef USE_LWIP
-        lwip_close(ctx->fd);
-#else
-        close(ctx->fd);
-#endif
+        mbedtls_net_close(ctx);
         ret = MBEDTLS_ERR_NET_CONNECT_FAILED;
     }
 
@@ -253,22 +236,14 @@ int mbedtls_net_bind(mbedtls_net_context *ctx, const char *bind_ip, const char *
 
         n = 1;
         if (setsockopt(ctx->fd, SOL_SOCKET, SO_REUSEADDR,
-                       (const char *) &n, sizeof( n )) != 0) {
-#ifdef USE_LWIP
-            lwip_close(ctx->fd);
-#else
-            close(ctx->fd);
-#endif
+                       (const char *) &n, sizeof(n)) != 0) {
+            mbedtls_net_close(ctx);
             ret = MBEDTLS_ERR_NET_SOCKET_FAILED;
             continue;
         }
 
         if (bind(ctx->fd, cur->ai_addr, MSVC_INT_CAST cur->ai_addrlen) != 0) {
-#ifdef USE_LWIP
-            lwip_close(ctx->fd);
-#else
-            close(ctx->fd);
-#endif
+            mbedtls_net_close(ctx);
             ret = MBEDTLS_ERR_NET_BIND_FAILED;
             continue;
         }
@@ -276,11 +251,7 @@ int mbedtls_net_bind(mbedtls_net_context *ctx, const char *bind_ip, const char *
         /* Listen only makes sense for TCP */
         if (proto == MBEDTLS_NET_PROTO_TCP) {
             if (listen(ctx->fd, MBEDTLS_NET_LISTEN_BACKLOG) != 0) {
-#ifdef USE_LWIP
-                lwip_close(ctx->fd);
-#else
-                close(ctx->fd);
-#endif
+                mbedtls_net_close(ctx);
                 ret = MBEDTLS_ERR_NET_LISTEN_FAILED;
                 continue;
             }
@@ -322,11 +293,7 @@ static int net_would_block(const mbedtls_net_context *ctx)
     /*
      * Never return 'WOULD BLOCK' on a blocking socket
      */
-#ifdef USE_LWIP
-    if ((lwip_fcntl(ctx->fd, F_GETFL, 0) & O_NONBLOCK) != O_NONBLOCK) {
-#else
     if ((fcntl(ctx->fd, F_GETFL) & O_NONBLOCK) != O_NONBLOCK) {
-#endif
         errno = err;
         return 0;
     }
@@ -464,11 +431,7 @@ int mbedtls_net_set_block(mbedtls_net_context *ctx)
     u_long n = 0;
     return ioctlsocket(ctx->fd, FIONBIO, &n);
 #else
-#ifdef USE_LWIP
-    return lwip_fcntl(ctx->fd, F_SETFL, lwip_fcntl(ctx->fd, F_GETFL, 0) & ~O_NONBLOCK);
-#else
     return fcntl(ctx->fd, F_SETFL, fcntl(ctx->fd, F_GETFL) & ~O_NONBLOCK);
-#endif // USE_LWIP
 #endif
 }
 
@@ -479,11 +442,7 @@ int mbedtls_net_set_nonblock(mbedtls_net_context *ctx)
     u_long n = 1;
     return ioctlsocket(ctx->fd, FIONBIO, &n);
 #else
-#ifdef USE_LWIP
-    return lwip_fcntl(ctx->fd, F_SETFL, lwip_fcntl(ctx->fd, F_GETFL, 0) | O_NONBLOCK);
-#else
     return fcntl(ctx->fd, F_SETFL, fcntl(ctx->fd, F_GETFL) | O_NONBLOCK);
-#endif // USE_LWIP
 #endif
 }
 
@@ -565,8 +524,8 @@ void mbedtls_net_usleep(unsigned long usec)
 #else
     struct timeval tv;
     tv.tv_sec  = usec / 1000000;
-#if defined(__unix__) || defined(__unix) || \
-    (defined(__APPLE__) && defined(__MACH__))
+#if (defined(__unix__) || defined(__unix) || \
+    (defined(__APPLE__) && defined(__MACH__))) && !defined(__DJGPP__)
     tv.tv_usec = (suseconds_t) usec % 1000000;
 #else
     tv.tv_usec = usec % 1000000;
@@ -587,12 +546,8 @@ int mbedtls_net_recv(void *ctx, unsigned char *buf, size_t len)
     if (ret != 0) {
         return ret;
     }
-#ifdef LITEOS_VERSION
-    ret = (int) recv( fd, buf, len, 0);
-#else
 
     ret = (int) read(fd, buf, len);
-#endif
 
     if (ret < 0) {
         if (net_would_block(ctx) != 0) {
@@ -681,12 +636,7 @@ int mbedtls_net_send(void *ctx, const unsigned char *buf, size_t len)
         return ret;
     }
 
-#ifdef LITEOS_VERSION
-    ret = (int) send(fd, buf, len, 0);
-#else
-
     ret = (int) write(fd, buf, len);
-#endif
 
     if (ret < 0) {
         if (net_would_block(ctx) != 0) {
@@ -722,11 +672,8 @@ void mbedtls_net_close(mbedtls_net_context *ctx)
     if (ctx->fd == -1) {
         return;
     }
-#ifdef USE_LWIP
-    lwip_close(ctx->fd);
-#else
+
     close(ctx->fd);
-#endif
 
     ctx->fd = -1;
 }
@@ -736,16 +683,12 @@ void mbedtls_net_close(mbedtls_net_context *ctx)
  */
 void mbedtls_net_free(mbedtls_net_context *ctx)
 {
-    if (ctx->fd == -1) {
+    if (ctx == NULL || ctx->fd == -1) {
         return;
     }
-#ifdef USE_LWIP
-    lwip_shutdown(ctx->fd, 2);
-    lwip_close(ctx->fd);
-#else
+
     shutdown(ctx->fd, 2);
     close(ctx->fd);
-#endif
 
     ctx->fd = -1;
 }
