@@ -171,7 +171,7 @@ static inline int mbedtls_psa_drbg_reseed(mbedtls_psa_drbg_context_t *drbg_ctx,
  */
 static inline void mbedtls_psa_drbg_deplete(mbedtls_psa_drbg_context_t *drbg_ctx)
 {
-    drbg_ctx->ressed_counter = drbg_ctx->ressde_interval;
+    drbg_ctx->reseed_counter = drbg_ctx->reseed_interval;
 }
 
 #if MBEDTLS_ENTROPY_TRUE_SOURCES > 0
