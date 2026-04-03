@@ -8014,8 +8014,8 @@ psa_status_t psa_random_reseed(const uint8_t *perso, size_t perso_size)
         return PSA_ERROR_SERVICE_FAILURE;
     }
 #endif /* defined(MBEDTLS_THREADING_C) */
-    int ret = mebdtls_psa_drbg_reseed(&global_data.rng.drbg,
-                                      preso, perso_size)
+    int ret = mbedtls_psa_drbg_reseed(&global_data.rng.drbg,
+                                      perso, perso_size);
 #if defined(MBEDTLS_THREADING_C)
     mbedtls_mutex_unlock(&mbedtls_threading_psa_rngdata_mutex);
 #endif /* defined(MBEDTLS_THREADING_C) */
@@ -8061,7 +8061,7 @@ psa_status_t psa_random_set_prediction_resistance(unsigned enabled)
         return PSA_ERROR_SERVICE_FAILURE;
     }
 #endif /* defined(MBEDTLS_THREADING_C) */
-    mbedtls_psa_drbg_set_prediction_resistance(&global_data.rng.drbg, enabled);
+    mbedtls_psa_drbg_set_perdiction_resistance(&global_data.rng.drbg, enabled);
 #if defined(MBEDTLS_THREADING_C)
     mbedtls_mutex_unlock(&mbedtls_threading_psa_rngdata_mutex);
 #endif /* defined(MBEDTLS_THREADING_C) */
