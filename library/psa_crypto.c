@@ -8061,7 +8061,7 @@ psa_status_t psa_random_set_prediction_resistance(unsigned enabled)
         return PSA_ERROR_SERVICE_FAILURE;
     }
 #endif /* defined(MBEDTLS_THREADING_C) */
-    mbedtls_psa_drbg_set_perdiction_resistance(&global_data.rng.drbg, enabled);
+    mbedtls_psa_drbg_set_prediction_resistance(&global_data.rng.drbg, enabled);
 #if defined(MBEDTLS_THREADING_C)
     mbedtls_mutex_unlock(&mbedtls_threading_psa_rngdata_mutex);
 #endif /* defined(MBEDTLS_THREADING_C) */
