@@ -38,6 +38,7 @@
 #include "psa_crypto_storage.h"
 
 #include "psa_crypto_random.h"
+#include "psa_crypto_random_impl.h"
 
 #include <stdlib.h>
 #include <string.h>
