@@ -11,14 +11,14 @@
 
 #include "common.h"
 
-#if !defined(MBEDTLS_PSA_CRYPTO_EXETRNAL_RNG)
+#if !defined(MBEDTLS_PSA_CRYPTO_EXTRNAL_RNG)
 
 #include <psa/crypto.h>
 #include "psa_crypto_random_impl.h"
 
 /** Initialize the PSA random generator. 
  *
- * \param[out] rng    The random genrator context to initialize.
+ * \param[out] rng    The random generator context to initialize.
  */
 void psa_random_internal_init(mbedtls_psa_random_context_t *rng);
 

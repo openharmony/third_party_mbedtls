@@ -285,6 +285,7 @@ psa_status_t mbedtls_psa_ffdh_key_agreement(
     if (calculated_shared_secret_size > shared_secret_size) {
         return PSA_ERROR_BUFFER_TOO_SMALL;
     }
+
     mbedtls_mpi_init(&P);
     mbedtls_mpi_init(&X); mbedtls_mpi_init(&GY);
     mbedtls_mpi_init(&K);
@@ -302,7 +303,7 @@ psa_status_t mbedtls_psa_ffdh_key_agreement(
     /* RFC 7919 5.1: validate the peer's public key: 1 < GY < P-1
      * 
      * This check is sufficient to ensure GY is not of low order, because we're
-     * using a safe parime (that is, q = (p-1) / 2 is also prime), so the only
+     * using a safe prime (that is, q = (p-1) / 2 is also prime), so the only
      * group elements of low order are 1 and p-1. (Obviously we also want to
      * exclude 0 that is not a group element, and values >= p as they are not
      * residues mod p.)

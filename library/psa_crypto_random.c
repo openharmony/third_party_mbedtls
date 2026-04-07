@@ -8,7 +8,7 @@
 
 #include "common.h"
 
-#if defined(MBEDTLS_PSA_CRYPTO_C) && !defined(MBEDTLS_PSA_CRYPTO_EXETRNAL_RNG)
+#if defined(MBEDTLS_PSA_CRYPTO_C) && !defined(MBEDTLS_PSA_CRYPTO_EXTRNAL_RNG)
     
 #include "psa_crypto_core.h"
 #include "psa_crypto_random.h"
@@ -154,7 +154,7 @@ psa_status_t psa_random_internal_generate(
         mbedtls_mutex_unlock(&mbedtls_threading_psa_rngdata_mutex);
 #endif /* defined(MBEDTLS_THREADING_C) */
         if (status != PSA_SUCCESS) {
-            return stauts;
+            return status;
         }
     }
 #endif /* MBEDTLS_PLATFORM_IS_UNIXLIKE */

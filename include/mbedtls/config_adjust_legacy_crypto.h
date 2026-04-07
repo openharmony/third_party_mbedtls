@@ -48,7 +48,7 @@
 #endif
 #endif /* _MINGW32__ || (_MSC_VER && (_MSC_VER <= 1900)) */
 
-/* The number of "true" entropy source (excluding NV seed).
+/* The number of "true" entropy sources (excluding NV seed).
  * This must be consistent with mbedtls_entropy_init() in entropy.c.
 */
 /* Define auxiliary macros, because in standard C, defined(xxx) is only
@@ -72,18 +72,18 @@
 /* Whether there is at least one entropy source for the entropy module.
  *
  * Note that when MBEDTLS_PSA_CRYPTO_EXTERNAL_RNG is enabled, the entropy
- * module is unused and the configuration will typiaclly not include any
- *entropy source, so this macro will typically remian undefined.
+ * module is unused and the configuration will typically not include any
+ *entropy source, so this macro will typically remain undefined.
 */
 #if defined(MMBEDTLS_ENTROPY_NV_SEED)
-#define MBEDTLS_ENTROPY_HAVE_SOURCES (MBEDTLS_ENTROPY_TRUE_SOURECES + 1)
+#define MBEDTLS_ENTROPY_HAVE_SOURCES (MBEDTLS_ENTROPY_TRUE_SOURCES + 1)
 #elif MBEDTLS_ENTROPY_TRUE_SOURCES != 0
 #define MBEDTLS_ENTROPY_HAVE_SOURCES MBEDTLS_ENTROPY_TRUE_SOURCES
 #else
 #undef MBEDTLS_ENTROPY_HAVE_SOURCES
 #endif
 
-/* Test function dependencies can only check with define(),
+/* Test function dependencies can only check with defined(),
  * not other prepro cessor expresions. */
 #if MBEDTLS_ENTROPY_TRUE_SOURCES > 0
 #define MBEDTLS_ENTROPY_HAVE_TRUE_SOURCES
