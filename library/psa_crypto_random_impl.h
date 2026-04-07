@@ -71,16 +71,16 @@ typedef struct {
     mbedtls_entropy_context entropy;
     mbedtls_psa_drbg_context_t drbg;
 #if defined(MBEDTLS_PLATFORM_IS_UNIXLIKE)
-    /* Fork preotection: normally pid = getpid(). If the value changes,
-     * we are in (grand)*child of the original process, so reseed 
+    /* Fork protection: normally pid = getpid(). If the value changes,
+     * we are in a (grand)*child of the original process, so reseed 
      * the RNG to ensure that the child and the original process have
      * distinct RNG states. See psa_random_internal_generate().
      *
      * The type is intmax_t, not pid_t, for portability reasons:
      * pid_t is defined in `unistd.h`, but on some platforms, it may
      * only be defined if a certain compatibility level is requested
-     * by defing a macro such as _POSIX_C_SOURCE or _XOPEN_SOURCE.
-     * The macor needs to be defined before any sys tem header, which
+     * by defining a macro such as _POSIX_C_SOURCE or _XOPEN_SOURCE.
+     * The macro needs to be defined before any sys tem header, which
      * may be hard to do in some C files that include this header
      * (e.g. test suites). So we sidestep this complication, at the
      * cost of possibly a few more instructions to compare pid values.
@@ -117,7 +117,7 @@ static inline void mbedtls_psa_drbg_free(mbedtls_psa_drbg_context_t *p_rng)
 
 /** Seed the PSA DRBG.
  *
- * \parm drbg_ctx       The DRBG context to seed.
+ * \param drbg_ctx       The DRBG context to seed.
  *                      It must be initialized but not active.
  * \param entropy       An entropy context to read the seed from.
  * \param custom        The personalization string.
@@ -183,7 +183,7 @@ static inline void mbedtls_psa_drbg_deplete(mbedtls_psa_drbg_context_t *drbg_ctx
  *                     It must be active.
  * \param enabled      \c 1 to enable, or \c 0 to disable.
  */
-static inline void mbedtls_psa_drbg_set_perdiction_resistance(
+static inline void mbedtls_psa_drbg_set_prediction_resistance(
     mbedtls_psa_drbg_context_t *drbg_ctx,
     unsigned enabled)
 {

@@ -11,24 +11,24 @@
 
 #include "common.h"
 
-#if !defined(MBEDTLS_PSA_CRYPTO_EXERNAL_RNG)
+#if !defined(MBEDTLS_PSA_CRYPTO_EXETRNAL_RNG)
 
 #include <psa/crypto.h>
 #include "psa_crypto_random_impl.h"
 
-/** Initalize the PSA random generator. 
+/** Initialize the PSA random generator. 
  *
  * \param[out] rng    The random genrator context to initialize.
  */
 void psa_random_internal_init(mbedtls_psa_random_context_t *rng);
 
-/** Deinitalize the PSA random generator.
+/** Deinitialize the PSA random generator.
  *
  * \param[in,out] rng   The random generator context to deinitialize.
  */
 void psa_random_internal_free(mbedtls_psa_random_context_t *rng);
 
-/** Seed the PSA rand generator.
+/** Seed the PSA random generator.
  *
  * \note This function is not thread-safe.
  *
@@ -43,12 +43,12 @@ void psa_random_internal_free(mbedtls_psa_random_context_t *rng);
 
 /**
  * \brief Generate random bytes. Like psa_generate_random(), but for use
- *        inside the libraty.
+ *        inside the library.
  *
  * This function is thread-safe.
  *
- * \waring This function **can** fail! Callers MUST check the return status
- *         and MUST NOT use the content of the output buffer id the return
+ * \warning This function **can** fail! Callers MUST check the return status
+ *         and MUST NOT use the content of the output buffer if the return
  *         status is not #PSA_SUCCESS.
  *
  * \param[in,out] rng      The random generator context to seed.
@@ -67,6 +67,6 @@ psa_status_t psa_random_internal_generate(
     mbedtls_psa_random_context_t *rng,
     uint8_t *output, size_t output_size);
 
-#endif /* !defined(MBEDTLS_PSA_CRYOTO_EXTERNAL_RNG) */
+#endif /* !defined(MBEDTLS_PSA_CRYPTO_EXTERNAL_RNG) */
 
 #endif /* PSA_CRYPTO_RANDOM_H */

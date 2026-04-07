@@ -8,7 +8,7 @@
 
 #include "common.h"
 
-#if defined(MBEDTLS_PSA_CRYPTO_C) && !defined(MBEDTLS_PSA_CRYPTO_EXERNAL_RNG)
+#if defined(MBEDTLS_PSA_CRYPTO_C) && !defined(MBEDTLS_PSA_CRYPTO_EXETRNAL_RNG)
     
 #include "psa_crypto_core.h"
 #include "psa_crypto_random.h"
@@ -44,10 +44,10 @@ void psa_random_internal_init(mbedtls_psa_random_context_t *rng)
     rng->entropy_init(&rng->entropy);
 #if defined(MBEDTLS_PSA_INJECT_ENTROPY) && \
     defined(MBEDTLS_NO_DEFAULT_ENTROPY_SOURCES)
-    /* The PSA entropy injection feature depends on using NV seed as an an entrop
+    /* The PSA entropy injection feature depends on using NV seed as an entropy
      * source. Add NV seed as an entropy source for PSA entropy injection.*/
     mbedtls_entropy_add_source(&rng->entropy,
-                               mbedtls_nv_seed_poll, NULL
+                               mbedtls_nv_seed_poll, NULL,
                                MBEDTLS_ENTROPY_BLOCK_SIZE,
                                MBEDTLS_ENTROPY_SOURCE_STRONG);
 #endif
@@ -76,7 +76,7 @@ static psa_status_t psa_random_internal_reseed_child(
     mbedtls_psa_random_context_t *rng,
     intmax_t pid)
 {
-    /* Rseeding from actual entropy gives the child a unique RNG state
+    /* Reseeding from actual entropy gives the child a unique RNG state
      * which the parent process cannot predict, and wipes the
      * parent's RNG state from the child.
      *
@@ -106,7 +106,7 @@ static psa_status_t psa_random_internal_reseed_child(
          */
         intmax_t pid;
         /* In case an old child had died and its PID is reused for
-         * a new child of the smae process, also include the time. */
+         * a new child of the same process, also include the time. */
 #if defined(MBEDTLS_HAVE_TIME)
         mbedtls_ms_time_t now;
 #else
@@ -118,18 +118,18 @@ static psa_status_t psa_random_internal_reseed_child(
 #if defined(MBEDTLS_HAVE_TIME)
     perso.now = mbedtls_ms_time();
 #else
-    /* We don't have mebdtls_ms_time(), but the platform has getpid().
+    /* We don't have mbedtls_ms_time(), but the platform has getpid().
      * Use gettimeofday(), which is a classic Unix function. Modern POSIX
      * has stopped requiring gettimeofday() (in favor of clock_gettime()),
      * but this is fallback code for restricted configurations, so it's
      * more likely to be used on embedded platforms that only have a subset
-     * of Unix APIs and are more likely to have the classic gettimeofday(). */\
+     * of Unix APIs and are more likely to have the classic gettimeofday(). */
      if (gettimeofday(&perso.now, NULL) == -1) {
          return PSA_ERROR_INSUFFICIENT_ENTROPY;
      }
 #endif
     int ret = mbedtls_psa_drbg_reseed(&rng->drbg,
-                                      (usigned char *) &perso, sizeof(perso));
+                                      (unsigned char *) &perso, sizeof(perso));
     return mbedtls_to_psa_error(ret);
 }
 #endif /* MBEDTLS_PLATFORM_IS_UNIXLIKE */
@@ -148,7 +148,13 @@ psa_status_t psa_random_internal_generate(
 #endif /* defined(MBEDTLS_THREADING_C) */
         psa_status_t status = psa_random_internal_reseed_child(rng, pid);
         if (status == PSA_SUCCESS) {
-            return status;
+            rng->pid = pid;
+        }
+#if defined(MBEDTLS_THREADING_C)
+        mbedtls_mutex_unlock(&mbedtls_threading_psa_rngdata_mutex);
+#endif /* defined(MBEDTLS_THREADING_C) */
+        if (status != PSA_SUCCESS) {
+            return stauts;
         }
     }
 #endif /* MBEDTLS_PLATFORM_IS_UNIXLIKE */

@@ -8008,7 +8008,7 @@ psa_status_t psa_random_reseed(const uint8_t *perso, size_t perso_size)
     (void) perso;
     (void) perso_size;
     return PSA_ERROR_NOT_SUPPORTED;
-#else /* MBEDTLS_PSA_CRYPTO_EXERNAL_RNG */
+#else /* MBEDTLS_PSA_CRYPTO_EXETRNAL_RNG */
 #if defined(MBEDTLS_THREADING_C)
     if (mbedtls_mutex_lock(&mbedtls_threading_psa_rngdata_mutex) != 0) {
         return PSA_ERROR_SERVICE_FAILURE;
@@ -8025,7 +8025,7 @@ psa_status_t psa_random_reseed(const uint8_t *perso, size_t perso_size)
 
 psa_status_t psa_random_deplete(void)
 {
-    GUARD_MODULE_INITIALIZED
+    GUARD_MODULE_INITIALIZED;
 #if defined(MBEDTLS_PSA_CRYPTO_EXTERNAL_RNG)
     return PSA_ERROR_NOT_SUPPORTED;
 #else /* MBEDTLS_PSA_CRYPTO_EXTERNAL_RNG */
@@ -8044,7 +8044,7 @@ psa_status_t psa_random_deplete(void)
 
 psa_status_t psa_random_set_prediction_resistance(unsigned enabled)
 {
-    GUARD_MODULE_INITIALIZED
+    GUARD_MODULE_INITIALIZED;
 
  #if defined(MBEDTLS_PSA_CRYPTO_EXTERNAL_RNG)
     (void) enabled;
@@ -8074,7 +8074,7 @@ psa_status_t psa_random_set_prediction_resistance(unsigned enabled)
         return PSA_SUCCESS;
     }
 
-#endif /* MBEDTLS_ENTROPY_SOURCES > 0 */
+#endif /* MBEDTLS_ENTROPY_TRUE_SOURCES > 0 */
 #endif /* MBEDTLS_PSA_CRYPTO_EXTERNAL_RNG */
 }
 
