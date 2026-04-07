@@ -488,7 +488,7 @@ psa_status_t mbedtls_psa_external_get_random(
  * The entropy source(s) are the ones configured at compile time.
  *
  * Therandom generator is always seeded automatically before use, and
- * it is resseded as needed based on the configured policy, so most
+ * it is reseeded as needed based on the configured policy, so most
  * applications do not need to call this function.
  *
  * The main reason to call this function is in scenarios where the process
@@ -513,7 +513,7 @@ psa_status_t mbedtls_psa_external_get_random(
  * actual entropy source, only a nonvolatile seed (i.e.
  * #MBEDTLS_ENTROPY_NV_SEED is enabled, #MBEDTLS_NO_PLATFORM_ENTROPY is
  * enabled and #MBEDTLS_ENTROPY_HARDWARE_ALT is disabled).
- * In such configurations, simply calling psa_random_ressed() in multiple
+ * In such configurations, simply calling psa_random_reseed() in multiple
  * cloned processes would result in the same random generator state in
  * all the clones. To avoid this, in such configurations, you must pass
  * a unique \p perso string in every clone.
@@ -548,14 +548,14 @@ psa_status_t mbedtls_psa_external_get_random(
  *         The PSA random generator is not active.
  * \retval #PSA_ERROR_NOT_SUPPORTED
  *         PSA uses an external random generator because the compilation
- *         option #MBEDTLS_PSA_CRYPTO_EXETRNAL_RNG is enabled. This
+ *         option #MBEDTLS_PSA_CRYPTO_EXTRNAL_RNG is enabled. This
  *         configuration does not support explicit reseeding.
  * \retval #PSA_ERROR_INSUFFICIENT_ENTROPY
  *         The entropy source failed.
  */
 psa_status_t psa_random_reseed(const uint8_t *perso, size_t perso_size);
 
-/** Force arese reseed of the PSA random generator the next time it is used.
+/** Force a reseed of the PSA random generator the next time it is used.
  *
  * The entropy source(s) are the ones configured at compile time.
  *
@@ -569,7 +569,7 @@ psa_status_t psa_random_reseed(const uint8_t *perso, size_t perso_size);
  * system is in an unintended state, so it can be used in contexts where
  * propagating errors is difficult.
  *
- * \note This function has no effect when #MBEDTLS_PSA_CRYPTO_EXTERANL_RNG
+ * \note This function has no effect when #MBEDTLS_PSA_CRYPTO_EXTERNAL_RNG
  *       is enabled.
  *
  * \note If prediction resistance is enabled (either explicitly, or because
@@ -582,7 +582,7 @@ psa_status_t psa_random_reseed(const uint8_t *perso, size_t perso_size);
  *         The PSA random generator is not active.
  * \retval #PSA_ERROR_NOT_SUPPORTED
  *         PSA uses an external random generator because the compilation
- *         option #MBEDTLS_PSA_CRYPTO_EXETRNAL_RNG is enabled. This
+ *         option #MBEDTLS_PSA_CRYPTO_EXTRNAL_RNG is enabled. This
  *         configuration does not support explicit reseeding.
  */
 psa_status_t psa_random_deplete(void);
@@ -626,7 +626,7 @@ psa_status_t psa_random_deplete(void);
  *         \p enabled is not valid.
  * \retval #PSA_ERROR_NOT_SUPPORTED
  *         PSA uses an external random generator because the compilation
- *         option #MBEDTLS_PSA_CRYPTO_EXETRNAL_RNG is enabled.
+ *         option #MBEDTLS_PSA_CRYPTO_EXTRNAL_RNG is enabled.
  *         Or, the random generator only has anonvolatile seed but no entropy
  *         source, and prediction resistance has been requested.
  */
