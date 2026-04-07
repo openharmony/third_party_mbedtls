@@ -75,7 +75,7 @@
  * module is unused and the configuration will typically not include any
  *entropy source, so this macro will typically remain undefined.
 */
-#if defined(MMBEDTLS_ENTROPY_NV_SEED)
+#if defined(MBEDTLS_ENTROPY_NV_SEED)
 #define MBEDTLS_ENTROPY_HAVE_SOURCES (MBEDTLS_ENTROPY_TRUE_SOURCES + 1)
 #elif MBEDTLS_ENTROPY_TRUE_SOURCES != 0
 #define MBEDTLS_ENTROPY_HAVE_SOURCES MBEDTLS_ENTROPY_TRUE_SOURCES
@@ -84,7 +84,7 @@
 #endif
 
 /* Test function dependencies can only check with defined(),
- * not other prepro cessor expresions. */
+ * not other prepro cessor expressions. */
 #if MBEDTLS_ENTROPY_TRUE_SOURCES > 0
 #define MBEDTLS_ENTROPY_HAVE_TRUE_SOURCES
 #else

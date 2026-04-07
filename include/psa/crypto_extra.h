@@ -548,7 +548,7 @@ psa_status_t mbedtls_psa_external_get_random(
  *         The PSA random generator is not active.
  * \retval #PSA_ERROR_NOT_SUPPORTED
  *         PSA uses an external random generator because the compilation
- *         option #MBEDTLS_PSA_CRYPTO_EXTRNAL_RNG is enabled. This
+ *         option #MBEDTLS_PSA_CRYPTO_EXTERNAL_RNG is enabled. This
  *         configuration does not support explicit reseeding.
  * \retval #PSA_ERROR_INSUFFICIENT_ENTROPY
  *         The entropy source failed.
@@ -582,7 +582,7 @@ psa_status_t psa_random_reseed(const uint8_t *perso, size_t perso_size);
  *         The PSA random generator is not active.
  * \retval #PSA_ERROR_NOT_SUPPORTED
  *         PSA uses an external random generator because the compilation
- *         option #MBEDTLS_PSA_CRYPTO_EXTRNAL_RNG is enabled. This
+ *         option #MBEDTLS_PSA_CRYPTO_EXTERNAL_RNG is enabled. This
  *         configuration does not support explicit reseeding.
  */
 psa_status_t psa_random_deplete(void);
@@ -626,7 +626,7 @@ psa_status_t psa_random_deplete(void);
  *         \p enabled is not valid.
  * \retval #PSA_ERROR_NOT_SUPPORTED
  *         PSA uses an external random generator because the compilation
- *         option #MBEDTLS_PSA_CRYPTO_EXTRNAL_RNG is enabled.
+ *         option #MBEDTLS_PSA_CRYPTO_EXTERNAL_RNG is enabled.
  *         Or, the random generator only has anonvolatile seed but no entropy
  *         source, and prediction resistance has been requested.
  */
