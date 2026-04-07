@@ -11,7 +11,7 @@
 
 #include "common.h"
 
-#if !defined(MBEDTLS_PSA_CRYPTO_EXTRNAL_RNG)
+#if !defined(MBEDTLS_PSA_CRYPTO_EXTERNAL_RNG)
 
 #include <psa/crypto.h>
 #include "psa_crypto_random_impl.h"
