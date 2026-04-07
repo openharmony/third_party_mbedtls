@@ -2765,7 +2765,6 @@ static int x509_inet_pton_ipv6(const char *src, void *dst)
                  */
                 do {
                     p--;
-                    steps--;
                 } while (*p != ':');
 
                 p++;
