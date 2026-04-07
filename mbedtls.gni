@@ -97,6 +97,7 @@ LIBRARYFILES = [
   "$MBEDTLSDIR/library/psa_crypto_hash.c",
   "$MBEDTLSDIR/library/psa_crypto_mac.c",
   "$MBEDTLSDIR/library/psa_crypto_pake.c",
+  "$MBEDTLSDIR/library/psa_crypto_random.c",
   "$MBEDTLSDIR/library/psa_crypto_rsa.c",
   "$MBEDTLSDIR/library/psa_crypto_se.c",
   "$MBEDTLSDIR/library/psa_its_file.c",

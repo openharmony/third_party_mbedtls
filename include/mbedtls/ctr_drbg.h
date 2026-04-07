@@ -187,7 +187,6 @@ typedef struct mbedtls_ctr_drbg_context {
     int MBEDTLS_PRIVATE(reseed_counter);         /*!< The reseed counter.
                                                   * This is the number of requests that have
                                                   * been made since the last (re)seeding,
-                                                  * minus one.
                                                   * Before the initial seeding, this field
                                                   * contains the amount of entropy in bytes
                                                   * to use as a nonce for the initial seeding,
