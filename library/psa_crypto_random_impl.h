@@ -177,9 +177,9 @@ static inline void mbedtls_psa_drbg_deplete(mbedtls_psa_drbg_context_t *drbg_ctx
 #if MBEDTLS_ENTROPY_TRUE_SOURCES > 0
 /** Set prediction resistance in the PSA DRBG.
  *
- * \note This fuction is not thread-safe.
+ * \note This function is not thread-safe.
  *
- * \param drbg_ctx     The DRBG contxt to reconfigure.
+ * \param drbg_ctx     The DRBG context to reconfigure.
  *                     It must be active.
  * \param enabled      \c 1 to enable, or \c 0 to disable.
  */
