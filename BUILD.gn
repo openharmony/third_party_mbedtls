@@ -134,6 +134,11 @@ if (defined(ohos_lite)) {
   }
 
   ohos_shared_library("mbedtls_shared") {
+    sanitize = {
+      cfi = true
+      cfi_cross_dso = true
+      debug = false
+    }
     if (mbedtls_enable_ssl_srv == true) {
       defines = [
         "MBEDTLS_KEY_EXCHANGE_PSK_ENABLED",
