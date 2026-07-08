@@ -137,6 +137,7 @@ if (defined(ohos_lite)) {
     sanitize = {
       cfi = true
       cfi_cross_dso = true
+      cfi_no_nvcall = true
       debug = false
     }
     if (mbedtls_enable_ssl_srv == true) {
