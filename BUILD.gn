@@ -14,6 +14,7 @@
 #
 
 import("//third_party/mbedtls/mbedtls.gni")
+import("//third_party/mbedtls/mbedtls_feature.gni")
 
 MBEDTLS_SOURCES += [
   "library/debug.c",
@@ -59,12 +60,35 @@ if (defined(ohos_lite)) {
         "MBEDTLS_CONFIG_FILE=<../port/config/config_liteos_a.h>",
       ]
     }
+    # --- feature-ization / source-switch (tail-appended branch) ---
+    # When feature-ization is on, swap the baseline config header for the
+    # feature config header and inject the per-feature module macros.
+    if (mbedtls_featureized) {
+      if (ohos_kernel_type == "liteos_m") {
+        defines -= [ "MBEDTLS_CONFIG_FILE=<../port/config/config_liteos_m.h>" ]
+        defines += [ "MBEDTLS_CONFIG_FILE=<../port/config/config_lite_feature.h>" ]
+      } else if (ohos_kernel_type == "liteos_a") {
+        defines -= [ "MBEDTLS_CONFIG_FILE=<../port/config/config_liteos_a.h>" ]
+        defines += [ "MBEDTLS_CONFIG_FILE=<../port/config/config_standard_feature.h>" ]
+      }
+      defines += MBEDTLS_FEATURE_DEFINES
+    }
+    if ((mbedtls_ohos_switch || mbedtls_featureized) && !mbedtls_platform_entropy) {
+      defines += [ "MBEDTLS_NO_PLATFORM_ENTROPY" ]
+    }
+  }
+
+  # feature-ization: when on, replace MBEDTLS_SOURCES with the feature list;
+  # targets below then use `sources = MBEDTLS_SOURCES` unconditionally.
+  if (mbedtls_featureized) {
+    MBEDTLS_SOURCES = []
+    MBEDTLS_SOURCES += MBEDTLS_FEATURE_SOURCES
   }
 
   lite_library("mbedtls_shared") {
     target_type = "shared_library"
     public_configs = [ ":mbedtls_config" ]
-    output_name = "mbedtls"
+    output_name = MBEDTLS_LIB_NAME
     sources = MBEDTLS_SOURCES
   }
 
@@ -77,7 +101,7 @@ if (defined(ohos_lite)) {
     }
     target_type = "static_library"
     public_configs = [ ":mbedtls_config" ]
-    output_name = "mbedtls"
+    output_name = MBEDTLS_LIB_NAME
     sources = MBEDTLS_SOURCES
   }
 
@@ -131,6 +155,21 @@ if (defined(ohos_lite)) {
   import("//build/ohos.gni")
   config("mbedtls_config") {
     include_dirs = MBEDTLS_INLCUDE_DIRS
+    # --- feature-ization / source-switch (tail-appended branch) ---
+    if (mbedtls_featureized) {
+      defines += MBEDTLS_FEATURE_DEFINES
+      defines += [ "MBEDTLS_CONFIG_FILE=<../port/config/config_standard_feature.h>" ]
+    }
+    if ((mbedtls_ohos_switch || mbedtls_featureized) && !mbedtls_platform_entropy) {
+      defines += [ "MBEDTLS_NO_PLATFORM_ENTROPY" ]
+    }
+  }
+
+  # feature-ization: when on, replace MBEDTLS_SOURCES with the feature list;
+  # targets below then use `sources = MBEDTLS_SOURCES` unconditionally.
+  if (mbedtls_featureized) {
+    MBEDTLS_SOURCES = []
+    MBEDTLS_SOURCES += MBEDTLS_FEATURE_SOURCES
   }
 
   ohos_shared_library("mbedtls_shared") {
@@ -143,7 +182,7 @@ if (defined(ohos_lite)) {
 
     branch_protector_ret = "pac_ret"
     public_configs = [ ":mbedtls_config" ]
-    output_name = "mbedtls"
+    output_name = MBEDTLS_LIB_NAME
     subsystem_name = "thirdparty"
     version_script = "libmbedtls.map"
     innerapi_tags = [
@@ -171,4 +210,13 @@ if (defined(ohos_lite)) {
   group("mbedtls") {
     public_deps = [ ":mbedtls_shared" ]
   }
+}
+
+# mbedtls_ohos_switch marker file: written by GN, read by SDK cmake via dual-gate.
+# Tail-appended (top-level statement). Each gn gen overwrites it (no stale
+# residue); hm_build.sh copies it to SDK interim_binary.
+if (mbedtls_ohos_switch) {
+  write_file("$root_out_dir/mbedtls_ohos_switch.marker", "1")
+} else {
+  write_file("$root_out_dir/mbedtls_ohos_switch.marker", "0")
 }
