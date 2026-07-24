@@ -1,0 +1,598 @@
+# Copyright (c) 2021-2021 Huawei Device Co., Ltd. All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without modification,
+# are permitted provided that the following conditions are met:
+#
+# 1. Redistributions of source code must retain the above copyright notice, this list of
+#    conditions and the following disclaimer.
+#
+# 2. Redistributions in binary form must reproduce the above copyright notice, this list
+#    of conditions and the following disclaimer in the documentation and/or other materials
+#    provided with the distribution.
+#
+# 3. Neither the name of the copyright holder nor the names of its contributors may be used
+#    to endorse or promote products derived from this software without specific prior written
+#    permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
+# THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+# PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR
+# CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+# EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+# PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
+# OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+# WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+# OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+# ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+
+
+# ===========================================================================
+# ws63 source-switch + feature-ization (feature module imported by mbedtls.gni).
+#
+# This whole block is intentionally appended standalone so
+# that other product-form patches can edit the baseline above without conflict.
+# It does NOT reassign MBEDTLS_SOURCES; BUILD.gn targets override `sources`
+# per-target (via an end-of-block branch) when mbedtls_featureized = true.
+#
+# Evaluation order reminder: declare_args -> MBEDTLS_FEATURE_SOURCES/_feature_defines
+# accumulation -> asserts -> public aggregates. All flag reads happen after the
+# flags are declared, so tail placement is correct (GN is eager, top-to-bottom).
+# ===========================================================================
+declare_args() {
+  # ---- Master switch + feature-ization (active only when mbedtls_featureized = true) ----
+  # Note: all 39 features default to true. All corresponding algorithms are implemented in mbedtls v3.6.5
+  # (verified: every feature .c exists and is non-empty). No unimplemented algorithm among the 39.
+  mbedtls_featureized = false
+
+  # OHOS mbedtls switch (source switch): separate from feature-ization.
+  # When true: OHOS library named "mbedtls_ohos" -> linked to firmware (source switch active).
+  # When false: named "mbedtls" -> firmware uses SDK v3.1.0 mbedtls (no source switch).
+  # NOTE: Currently only adapted for ws63 (SDK cmake dual-gate in
+  #   device/soc/hisilicon/ws63v100/sdk). Other SoCs have not been validated.
+  # IMPORTANT: When enabled (true), feature-ization (mbedtls_featureized) MUST also be enabled to ensure
+  #   complete algorithm coverage. Source switch alone (without feature-ization) is NOT supported.
+  mbedtls_ohos_switch = false
+
+  # Platform entropy poll: default false (ws63 has no FS, use hardware TRNG).
+  # Set true via --gn-args mbedtls_platform_entropy=true (or config.json) on
+  # products with a filesystem to enable mbedtls_platform_entropy_poll.
+  mbedtls_platform_entropy = false
+
+  # ---- Crypto layer features (default = mini-system config parity) ----
+  mbedtls_feature_aes = true
+  mbedtls_feature_aria = false
+  mbedtls_feature_camellia = false
+  mbedtls_feature_des = true
+  mbedtls_feature_chacha20 = false
+  mbedtls_feature_gcm = true
+  mbedtls_feature_ccm = false
+  mbedtls_feature_cmac = false
+  mbedtls_feature_nist_kw = false
+  mbedtls_feature_md5 = true
+  mbedtls_feature_sha1 = true
+  mbedtls_feature_sha256 = true
+  mbedtls_feature_sha512 = true
+  mbedtls_feature_sha3 = false
+  mbedtls_feature_ripemd160 = false
+  mbedtls_feature_hkdf = true
+  mbedtls_feature_rsa = true
+  mbedtls_feature_dhm = true
+  mbedtls_feature_ecp = true
+  # ECP curve sub-features (effective only when mbedtls_feature_ecp = true).
+  # Default: all 13 curves enabled (true). A minimal curve set (e.g. SECP256R1 + CURVE25519 only)
+  # requires explicitly disabling 11 curves via --gn-args mbedtls_feature_ecp_curve_*=false.
+  # Each disabled curve saves ~2-3KB (curve params + per-curve mod funcs in ecp_curves.c,
+  # not removable by --gc-sections due to curve lookup table / ecp_group_load switch).
+  mbedtls_feature_ecp_curve_secp192r1 = true
+  mbedtls_feature_ecp_curve_secp224r1 = true
+  mbedtls_feature_ecp_curve_secp256r1 = true
+  mbedtls_feature_ecp_curve_secp384r1 = true
+  mbedtls_feature_ecp_curve_secp521r1 = true
+  mbedtls_feature_ecp_curve_secp192k1 = true
+  mbedtls_feature_ecp_curve_secp224k1 = true
+  mbedtls_feature_ecp_curve_secp256k1 = true
+  mbedtls_feature_ecp_curve_bp256r1 = true
+  mbedtls_feature_ecp_curve_bp384r1 = true
+  mbedtls_feature_ecp_curve_bp512r1 = true
+  mbedtls_feature_ecp_curve_curve25519 = true
+  mbedtls_feature_ecp_curve_curve448 = true
+  mbedtls_feature_ecdh = true
+  mbedtls_feature_ecdsa = true
+  mbedtls_feature_ecjpake = false
+  mbedtls_feature_pk = true
+  mbedtls_feature_bignum = true
+  mbedtls_feature_entropy = true
+  mbedtls_feature_encoding = true
+  mbedtls_feature_cipher = true
+  mbedtls_feature_constant_time = false
+  mbedtls_feature_md = true
+  mbedtls_feature_pkcs5 = true
+  mbedtls_feature_pkcs12 = false
+  mbedtls_feature_psa_crypto = false
+  mbedtls_feature_crypto_platform = true
+
+  # ---- X.509 layer features ----
+  mbedtls_feature_x509 = false
+  mbedtls_feature_x509_write = false
+
+  # ---- TLS layer features ----
+  mbedtls_feature_ssl_tls12 = false
+  mbedtls_feature_ssl_tls13 = false
+  mbedtls_feature_ssl_srv = false
+  mbedtls_feature_ssl_misc = false
+}
+
+MBEDTLS_FEATURE_SOURCES = []
+
+if (mbedtls_feature_aes) {
+  MBEDTLS_FEATURE_SOURCES += [
+    "library/aes.c",
+    "library/aesni.c",
+    "library/aesce.c",
+  ]
+}
+if (mbedtls_feature_aria) {
+  MBEDTLS_FEATURE_SOURCES += [ "library/aria.c" ]
+}
+if (mbedtls_feature_camellia) {
+  MBEDTLS_FEATURE_SOURCES += [ "library/camellia.c" ]
+}
+if (mbedtls_feature_des) {
+  MBEDTLS_FEATURE_SOURCES += [ "library/des.c" ]
+}
+if (mbedtls_feature_chacha20) {
+  MBEDTLS_FEATURE_SOURCES += [
+    "library/chacha20.c",
+    "library/chachapoly.c",
+    "library/poly1305.c",
+  ]
+}
+if (mbedtls_feature_gcm) {
+  MBEDTLS_FEATURE_SOURCES += [ "library/gcm.c" ]
+}
+if (mbedtls_feature_ccm) {
+  MBEDTLS_FEATURE_SOURCES += [ "library/ccm.c" ]
+}
+if (mbedtls_feature_cmac) {
+  MBEDTLS_FEATURE_SOURCES += [ "library/cmac.c" ]
+}
+if (mbedtls_feature_nist_kw) {
+  MBEDTLS_FEATURE_SOURCES += [ "library/nist_kw.c" ]
+}
+if (mbedtls_feature_md5) {
+  MBEDTLS_FEATURE_SOURCES += [ "library/md5.c" ]
+}
+if (mbedtls_feature_sha1) {
+  MBEDTLS_FEATURE_SOURCES += [ "library/sha1.c" ]
+}
+if (mbedtls_feature_sha256) {
+  MBEDTLS_FEATURE_SOURCES += [ "library/sha256.c" ]
+}
+if (mbedtls_feature_sha512) {
+  MBEDTLS_FEATURE_SOURCES += [ "library/sha512.c" ]
+}
+if (mbedtls_feature_sha3) {
+  MBEDTLS_FEATURE_SOURCES += [ "library/sha3.c" ]
+}
+if (mbedtls_feature_ripemd160) {
+  MBEDTLS_FEATURE_SOURCES += [ "library/ripemd160.c" ]
+}
+if (mbedtls_feature_hkdf) {
+  MBEDTLS_FEATURE_SOURCES += [ "library/hkdf.c" ]
+}
+if (mbedtls_feature_rsa) {
+  MBEDTLS_FEATURE_SOURCES += [
+    "library/rsa.c",
+    "library/rsa_alt_helpers.c",
+  ]
+}
+if (mbedtls_feature_dhm) {
+  MBEDTLS_FEATURE_SOURCES += [ "library/dhm.c" ]
+}
+if (mbedtls_feature_ecp) {
+  MBEDTLS_FEATURE_SOURCES += [
+    "library/ecp.c",
+    "library/ecp_curves.c",
+  ]
+}
+if (mbedtls_feature_ecdh) {
+  MBEDTLS_FEATURE_SOURCES += [ "library/ecdh.c" ]
+}
+if (mbedtls_feature_ecdsa) {
+  MBEDTLS_FEATURE_SOURCES += [ "library/ecdsa.c" ]
+}
+if (mbedtls_feature_ecjpake) {
+  MBEDTLS_FEATURE_SOURCES += [ "library/ecjpake.c" ]
+}
+if (mbedtls_feature_pk) {
+  MBEDTLS_FEATURE_SOURCES += [
+    "library/pk.c",
+    "library/pk_wrap.c",
+    "library/pk_ecc.c",
+    "library/pkparse.c",
+    "library/pkwrite.c",
+  ]
+}
+if (mbedtls_feature_bignum) {
+  MBEDTLS_FEATURE_SOURCES += [
+    "library/bignum.c",
+    "library/bignum_core.c",
+  ]
+}
+if (mbedtls_feature_entropy) {
+  MBEDTLS_FEATURE_SOURCES += [
+    "library/entropy.c",
+    "library/entropy_poll.c",
+    "library/ctr_drbg.c",
+    "library/hmac_drbg.c",
+  ]
+}
+if (mbedtls_feature_encoding) {
+  MBEDTLS_FEATURE_SOURCES += [
+    "library/asn1parse.c",
+    "library/asn1write.c",
+    "library/pem.c",
+    "library/base64.c",
+    "library/oid.c",
+  ]
+}
+if (mbedtls_feature_cipher) {
+  MBEDTLS_FEATURE_SOURCES += [
+    "library/cipher.c",
+    "library/cipher_wrap.c",
+  ]
+}
+if (mbedtls_feature_md) {
+  MBEDTLS_FEATURE_SOURCES += [ "library/md.c" ]
+}
+if (mbedtls_feature_pkcs5) {
+  MBEDTLS_FEATURE_SOURCES += [ "library/pkcs5.c" ]
+}
+if (mbedtls_feature_pkcs12) {
+  MBEDTLS_FEATURE_SOURCES += [ "library/pkcs12.c" ]
+}
+if (mbedtls_feature_psa_crypto) {
+  MBEDTLS_FEATURE_SOURCES += [
+    "library/psa_crypto.c",
+    "library/psa_crypto_aead.c",
+    "library/psa_crypto_cipher.c",
+    "library/psa_crypto_client.c",
+    "library/psa_crypto_driver_wrappers_no_static.c",
+    "library/psa_crypto_ecp.c",
+    "library/psa_crypto_hash.c",
+    "library/psa_crypto_mac.c",
+    "library/psa_crypto_random.c",
+    "library/psa_crypto_rsa.c",
+    "library/psa_crypto_se.c",
+    "library/psa_crypto_pake.c",
+    "library/psa_its_file.c",
+    "library/psa_crypto_storage.c",
+    "library/psa_crypto_slot_management.c",
+    "library/psa_util.c",
+  ]
+}
+if (mbedtls_feature_crypto_platform) {
+  MBEDTLS_FEATURE_SOURCES += [
+    "library/platform.c",
+    "library/platform_util.c",
+    "library/memory_buffer_alloc.c",
+    "library/padlock.c",
+    "library/error.c",
+    "library/version.c",
+    "library/version_features.c",
+    "library/threading.c",
+    "library/timing.c",
+    # constant_time.c has unguarded (always-compiled) helper code, so it is
+    # compiled with the platform layer regardless of mbedtls_feature_constant_time
+    # (which only controls the MBEDTLS_CONSTANT_TIME_C macro). This matches the
+    # legacy build which compiled constant_time.c unconditionally.
+    "library/constant_time.c",
+  ]
+}
+if (mbedtls_feature_x509) {
+  MBEDTLS_FEATURE_SOURCES += [
+    "library/x509.c",
+    "library/x509_crt.c",
+    "library/x509_crl.c",
+    "library/x509_create.c",
+    "library/x509_csr.c",
+  ]
+}
+if (mbedtls_feature_x509_write) {
+  MBEDTLS_FEATURE_SOURCES += [
+    "library/x509write_crt.c",
+    "library/x509write_csr.c",
+  ]
+}
+if (mbedtls_feature_ssl_tls12) {
+  MBEDTLS_FEATURE_SOURCES += [
+    "library/ssl_tls.c",
+    "library/ssl_msg.c",
+    "library/ssl_ciphersuites.c",
+    "library/ssl_client.c",
+    "library/ssl_tls12_client.c",
+    "library/ssl_tls12_server.c",
+    "library/ssl_cache.c",
+    "library/ssl_cookie.c",
+    "library/ssl_ticket.c",
+    "library/debug.c",
+    "library/mps_reader.c",
+    "library/mps_trace.c",
+  ]
+}
+if (mbedtls_feature_ssl_tls13) {
+  MBEDTLS_FEATURE_SOURCES += [
+    "library/ssl_tls13_client.c",
+    "library/ssl_tls13_generic.c",
+    "library/ssl_tls13_keys.c",
+    "library/ssl_tls13_server.c",
+  ]
+}
+if (mbedtls_feature_ssl_misc) {
+  MBEDTLS_FEATURE_SOURCES += [
+    "library/net_sockets.c",
+    "port/src/tls_client.c",
+    "port/src/tls_certificate.c",
+  ]
+}
+
+# -----------------------------------------------------------------------------
+# Feature -> MBEDTLS module macro mapping.
+# Only the module macros that the legacy mini config (config_liteos_m.h) enabled
+# are injected by default, so the default build is macro-equivalent to the
+# pre-feature-ization build. AESNI_C/AESCE_C/HMAC_DRBG_C are intentionally NOT
+# injected (matching the legacy config); their .c files still compile as empty
+# shells via the source mapping above.
+# -----------------------------------------------------------------------------
+
+_feature_defines = []
+
+if (mbedtls_feature_aes) {
+  _feature_defines += [ "MBEDTLS_AES_C=" ]
+}
+if (mbedtls_feature_aria) {
+  _feature_defines += [ "MBEDTLS_ARIA_C=" ]
+}
+if (mbedtls_feature_camellia) {
+  _feature_defines += [ "MBEDTLS_CAMELLIA_C=" ]
+}
+if (mbedtls_feature_des) {
+  _feature_defines += [ "MBEDTLS_DES_C=" ]
+}
+if (mbedtls_feature_chacha20) {
+  _feature_defines += [
+    "MBEDTLS_CHACHA20_C=",
+    "MBEDTLS_CHACHAPOLY_C=",
+    "MBEDTLS_POLY1305_C=",
+  ]
+}
+if (mbedtls_feature_gcm) {
+  _feature_defines += [ "MBEDTLS_GCM_C=" ]
+}
+if (mbedtls_feature_ccm) {
+  _feature_defines += [ "MBEDTLS_CCM_C=" ]
+}
+if (mbedtls_feature_cmac) {
+  _feature_defines += [ "MBEDTLS_CMAC_C=" ]
+}
+if (mbedtls_feature_nist_kw) {
+  _feature_defines += [ "MBEDTLS_NIST_KW_C=" ]
+}
+if (mbedtls_feature_md5) {
+  _feature_defines += [ "MBEDTLS_MD5_C=" ]
+}
+if (mbedtls_feature_sha1) {
+  _feature_defines += [ "MBEDTLS_SHA1_C=" ]
+}
+if (mbedtls_feature_sha256) {
+  _feature_defines += [
+    "MBEDTLS_SHA256_C=",
+    "MBEDTLS_SHA224_C=",
+  ]
+}
+if (mbedtls_feature_sha512) {
+  _feature_defines += [
+    "MBEDTLS_SHA512_C=",
+    "MBEDTLS_SHA384_C=",
+  ]
+}
+if (mbedtls_feature_sha3) {
+  _feature_defines += [ "MBEDTLS_SHA3_C=" ]
+}
+if (mbedtls_feature_ripemd160) {
+  _feature_defines += [ "MBEDTLS_RIPEMD160_C=" ]
+}
+if (mbedtls_feature_hkdf) {
+  _feature_defines += [ "MBEDTLS_HKDF_C=" ]
+}
+if (mbedtls_feature_rsa) {
+  _feature_defines += [ "MBEDTLS_RSA_C=" ]
+}
+if (mbedtls_feature_dhm) {
+  _feature_defines += [ "MBEDTLS_DHM_C=" ]
+}
+if (mbedtls_feature_ecp) {
+  _feature_defines += [ "MBEDTLS_ECP_C=" ]
+  if (mbedtls_feature_ecp_curve_secp192r1) { _feature_defines += [ "MBEDTLS_ECP_DP_SECP192R1_ENABLED" ] }
+  if (mbedtls_feature_ecp_curve_secp224r1) { _feature_defines += [ "MBEDTLS_ECP_DP_SECP224R1_ENABLED" ] }
+  if (mbedtls_feature_ecp_curve_secp256r1) { _feature_defines += [ "MBEDTLS_ECP_DP_SECP256R1_ENABLED" ] }
+  if (mbedtls_feature_ecp_curve_secp384r1) { _feature_defines += [ "MBEDTLS_ECP_DP_SECP384R1_ENABLED" ] }
+  if (mbedtls_feature_ecp_curve_secp521r1) { _feature_defines += [ "MBEDTLS_ECP_DP_SECP521R1_ENABLED" ] }
+  if (mbedtls_feature_ecp_curve_secp192k1) { _feature_defines += [ "MBEDTLS_ECP_DP_SECP192K1_ENABLED" ] }
+  if (mbedtls_feature_ecp_curve_secp224k1) { _feature_defines += [ "MBEDTLS_ECP_DP_SECP224K1_ENABLED" ] }
+  if (mbedtls_feature_ecp_curve_secp256k1) { _feature_defines += [ "MBEDTLS_ECP_DP_SECP256K1_ENABLED" ] }
+  if (mbedtls_feature_ecp_curve_bp256r1) { _feature_defines += [ "MBEDTLS_ECP_DP_BP256R1_ENABLED" ] }
+  if (mbedtls_feature_ecp_curve_bp384r1) { _feature_defines += [ "MBEDTLS_ECP_DP_BP384R1_ENABLED" ] }
+  if (mbedtls_feature_ecp_curve_bp512r1) { _feature_defines += [ "MBEDTLS_ECP_DP_BP512R1_ENABLED" ] }
+  if (mbedtls_feature_ecp_curve_curve25519) { _feature_defines += [ "MBEDTLS_ECP_DP_CURVE25519_ENABLED" ] }
+  if (mbedtls_feature_ecp_curve_curve448) { _feature_defines += [ "MBEDTLS_ECP_DP_CURVE448_ENABLED" ] }
+}
+if (mbedtls_feature_ecdh) {
+  _feature_defines += [ "MBEDTLS_ECDH_C=" ]
+}
+if (mbedtls_feature_ecdsa) {
+  _feature_defines += [ "MBEDTLS_ECDSA_C=" ]
+}
+if (mbedtls_feature_ecjpake) {
+  _feature_defines += [ "MBEDTLS_ECJPAKE_C=" ]
+}
+if (mbedtls_feature_pk) {
+  _feature_defines += [
+    "MBEDTLS_PK_C=",
+    "MBEDTLS_PK_PARSE_C=",
+    "MBEDTLS_PK_WRITE_C=",
+  ]
+}
+if (mbedtls_feature_bignum) {
+  _feature_defines += [ "MBEDTLS_BIGNUM_C=" ]
+}
+if (mbedtls_feature_entropy) {
+  _feature_defines += [
+    "MBEDTLS_ENTROPY_C=",
+    "MBEDTLS_CTR_DRBG_C=",
+  ]
+}
+if (mbedtls_feature_encoding) {
+  _feature_defines += [
+    "MBEDTLS_ASN1_PARSE_C=",
+    "MBEDTLS_ASN1_WRITE_C=",
+    "MBEDTLS_PEM_PARSE_C=",
+    "MBEDTLS_PEM_WRITE_C=",
+    "MBEDTLS_BASE64_C=",
+    "MBEDTLS_OID_C=",
+  ]
+}
+if (mbedtls_feature_cipher) {
+  _feature_defines += [ "MBEDTLS_CIPHER_C=" ]
+}
+if (mbedtls_feature_constant_time) {
+  _feature_defines += [ "MBEDTLS_CONSTANT_TIME_C=" ]
+}
+if (mbedtls_feature_md) {
+  _feature_defines += [ "MBEDTLS_MD_C=" ]
+}
+if (mbedtls_feature_pkcs5) {
+  _feature_defines += [ "MBEDTLS_PKCS5_C=" ]
+}
+if (mbedtls_feature_pkcs12) {
+  _feature_defines += [ "MBEDTLS_PKCS12_C=" ]
+}
+if (mbedtls_feature_psa_crypto) {
+  _feature_defines += [
+    "MBEDTLS_PSA_CRYPTO_C=",
+    "MBEDTLS_PSA_CRYPTO_STORAGE_C=",
+    "MBEDTLS_PSA_ITS_FILE_C=",
+  ]
+}
+if (mbedtls_feature_crypto_platform) {
+  _feature_defines += [
+    "MBEDTLS_PLATFORM_C=",
+    "MBEDTLS_MEMORY_BUFFER_ALLOC_C=",
+    "MBEDTLS_VERSION_C=",
+    "MBEDTLS_PADLOCK_C=",
+  ]
+}
+if (mbedtls_feature_x509) {
+  _feature_defines += [
+    "MBEDTLS_X509_USE_C=",
+    "MBEDTLS_X509_CRT_PARSE_C=",
+    "MBEDTLS_X509_CRL_PARSE_C=",
+  ]
+}
+if (mbedtls_feature_x509_write) {
+  _feature_defines += [ "MBEDTLS_X509_WRITE_C=" ]
+}
+if (mbedtls_feature_ssl_tls12) {
+  _feature_defines += [
+    "MBEDTLS_SSL_TLS_C=",
+    "MBEDTLS_SSL_CLI_C=",
+    "MBEDTLS_SSL_CACHE_C=",
+    "MBEDTLS_SSL_COOKIE_C=",
+    "MBEDTLS_SSL_TICKET_C=",
+  ]
+}
+if (mbedtls_feature_ssl_tls13) {
+  _feature_defines += [ "MBEDTLS_SSL_PROTO_TLS1_3=" ]
+}
+if (mbedtls_feature_ssl_srv) {
+  _feature_defines += [
+    "MBEDTLS_SSL_SRV_C=",
+    "MBEDTLS_KEY_EXCHANGE_PSK_ENABLED=",
+  ]
+}
+if (mbedtls_feature_ssl_misc) {
+  _feature_defines += [ "MBEDTLS_NET_C=" ]
+}
+
+# -----------------------------------------------------------------------------
+# Dependency assertions (compile-time checked).
+# -----------------------------------------------------------------------------
+
+assert(!mbedtls_feature_gcm || mbedtls_feature_aes,
+       "mbedtls_feature_gcm requires mbedtls_feature_aes")
+assert(!mbedtls_feature_ccm || mbedtls_feature_aes,
+       "mbedtls_feature_ccm requires mbedtls_feature_aes")
+assert(!mbedtls_feature_chacha20 || mbedtls_feature_cipher,
+       "mbedtls_feature_chacha20 requires mbedtls_feature_cipher")
+assert(!mbedtls_feature_cmac || mbedtls_feature_cipher,
+       "mbedtls_feature_cmac requires mbedtls_feature_cipher")
+assert(!mbedtls_feature_ecdh || mbedtls_feature_ecp,
+       "mbedtls_feature_ecdh requires mbedtls_feature_ecp")
+assert(!mbedtls_feature_ecdsa || mbedtls_feature_ecp,
+       "mbedtls_feature_ecdsa requires mbedtls_feature_ecp")
+assert(!mbedtls_feature_ecjpake || mbedtls_feature_ecp,
+       "mbedtls_feature_ecjpake requires mbedtls_feature_ecp")
+assert(!mbedtls_feature_ecp || mbedtls_feature_bignum,
+       "mbedtls_feature_ecp requires mbedtls_feature_bignum")
+assert(!mbedtls_feature_rsa || mbedtls_feature_bignum,
+       "mbedtls_feature_rsa requires mbedtls_feature_bignum")
+assert(!mbedtls_feature_dhm || mbedtls_feature_bignum,
+       "mbedtls_feature_dhm requires mbedtls_feature_bignum")
+assert(!mbedtls_feature_pk || (mbedtls_feature_encoding && mbedtls_feature_md),
+       "mbedtls_feature_pk requires mbedtls_feature_encoding and mbedtls_feature_md")
+assert(!mbedtls_feature_pkcs5 || mbedtls_feature_md,
+       "mbedtls_feature_pkcs5 requires mbedtls_feature_md")
+assert(!mbedtls_feature_hkdf || mbedtls_feature_md,
+       "mbedtls_feature_hkdf requires mbedtls_feature_md")
+assert(!mbedtls_feature_x509 || (mbedtls_feature_pk && mbedtls_feature_encoding),
+       "mbedtls_feature_x509 requires mbedtls_feature_pk and mbedtls_feature_encoding")
+assert(!mbedtls_feature_ssl_tls12 ||
+       (mbedtls_feature_cipher && mbedtls_feature_sha256 &&
+        mbedtls_feature_pk && mbedtls_feature_entropy),
+       "mbedtls_feature_ssl_tls12 requires cipher, sha256, pk, entropy")
+assert(!mbedtls_feature_ssl_tls13 || mbedtls_feature_ssl_tls12,
+       "mbedtls_feature_ssl_tls13 requires mbedtls_feature_ssl_tls12")
+assert(!mbedtls_feature_ssl_srv || mbedtls_feature_ssl_tls12,
+       "mbedtls_feature_ssl_srv requires mbedtls_feature_ssl_tls12")
+
+# -----------------------------------------------------------------------------
+# Public aggregate variables consumed by BUILD.gn.
+#
+# MBEDTLS_SOURCES is intentionally NOT reassigned here: the baseline gni above
+# already set it to LIBRARYFILES (+ ohos_lite port extras). When feature-ization
+# is on, each BUILD.gn target overrides `sources = MBEDTLS_FEATURE_SOURCES` via an
+# end-of-block branch, so the baseline MBEDTLS_SOURCES is discarded only then.
+#
+# feature-ization (mbedtls_featureized) and source switch (mbedtls_ohos_switch)
+# are decoupled; they can be independently toggled. However:
+#   >>> Source switch (ohos_switch=true) MUST be used together with feature-ization
+#       (featureized=true) to ensure complete algorithm coverage. <<<
+# Source switch alone (without feature-ization) is NOT supported (config_liteos_m.h
+# may miss algorithms like MBEDTLS_DHM_C needed by wpa_supplicant EAP-TLS).
+# -----------------------------------------------------------------------------
+
+if (mbedtls_featureized) {
+  MBEDTLS_FEATURE_DEFINES = _feature_defines
+} else {
+  MBEDTLS_FEATURE_DEFINES = []
+}
+
+# Library output name: "mbedtls_ohos" when source switch on, else baseline "mbedtls".
+# Read by BUILD.gn output_name (kept in place, only the value becomes this variable).
+if (mbedtls_ohos_switch) {
+  MBEDTLS_LIB_NAME = "mbedtls_ohos"
+} else {
+  MBEDTLS_LIB_NAME = "mbedtls"
+}
