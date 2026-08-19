@@ -180,7 +180,11 @@ int mbedtls_platform_entropy_poll(void *data,
 
     *olen = 0;
 
+#if defined(__LITEOS_M__) || defined(__LITEOS_A__)
     file = fopen("/dev/random", "rb");
+#else
+    file = fopen("/dev/urandom", "rb");
+#endif
     if (file == NULL) {
         return MBEDTLS_ERR_ENTROPY_SOURCE_FAILED;
     }
