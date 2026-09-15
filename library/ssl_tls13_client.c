@@ -410,7 +410,7 @@ static int ssl_tls13_parse_hrr_key_share_ext(mbedtls_ssl_context *ssl,
         }
 #if defined(PSA_WANT_ALG_ECDH)
         if (mbedtls_ssl_tls13_named_group_is_ecdhe(*group_list)) {
-            if ((mbedtls_ssl_get_psa_curve_info_from_tls_id(
+            if (mbedtls_ssl_get_psa_curve_info_from_tls_id(
                      *group_list, NULL, NULL) == PSA_ERROR_NOT_SUPPORTED) {
                 continue;
             }
